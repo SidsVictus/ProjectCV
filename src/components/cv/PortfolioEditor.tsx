@@ -106,7 +106,6 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
                   <path d="M4 56 C20 66 40 58 40 44 C40 30 22 32 26 44 C30 58 62 56 82 40 C96 30 108 26 122 28" />
                   <path d="M112 20 L123 28 L112 36" />
                 </svg>
-                <span className="doodle-note doodle-wall-note">this is your wallpaper</span>
               </div>
               <div className="tool-stack">
                 <button type="button" className="tool-btn" aria-label="Choose text colour" onClick={() => { setModal("colours"); setMenuOpen(false); }} style={{ animationDelay: ".4s" }}>
