@@ -128,7 +128,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
           </div>
 
           <section className="cv-pane" style={vars} aria-label="Portfolio">
-            <a className="cv-edit" href="/setup"><PencilIcon />Edit details</a>
+            <a className="cv-edit" href="/setup" style={{ textDecoration: "none" }}><PencilIcon />Edit details</a>
             <CvHeader profile={profile} count={projects.length} />
             <ProjectsTable projects={projects} table={table} owner={{ onEdit: (p) => setModal({ add: p }), onDelete: (p) => setModal({ del: p }) }} />
             {projects.length === 0 && <p className="cv-empty">Your first project goes here.</p>}

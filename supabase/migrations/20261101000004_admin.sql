@@ -99,6 +99,9 @@ begin
             where (p.created_at at time zone ist)::date between k.start and k.start + 6) size,
           (select jsonb_agg(case
               when w > 11 - k.idx then null
+              -- a week with no signups has no columns (not 0%)
+              when not exists (select 1 from public.profiles p
+                where (p.created_at at time zone ist)::date between k.start and k.start + 6) then null
               when w = 0 then 100
               else (select coalesce(round(100.0 * count(*) filter (where exists (
                   select 1 from public.edit_sessions s where s.user_id = p.id

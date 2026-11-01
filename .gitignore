@@ -13,3 +13,5 @@ next-env.d.ts
 supabase/.temp/
 supabase/.branches/
 .DS_Store
+tests/e2e/_scratch/
+public/_scratch/

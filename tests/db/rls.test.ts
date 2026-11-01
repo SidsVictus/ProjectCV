@@ -202,7 +202,10 @@ describe("super admin", () => {
     expect(data.daily.signups).toHaveLength(365);
     expect(data.daily.signups[0]).toBeGreaterThan(0);
     expect(data.cohorts).toHaveLength(12);
-    expect(data.cohorts[11].values[1]).toBeNull();
+    expect(data.cohorts[11].values[1]).toBeNull(); // the newest cohort has no week 1 yet
+    expect(data.cohorts[11].values[0]).toBe(100); // this week has signups
+    const empty = data.cohorts.find((c: { size: number }) => c.size === 0);
+    if (empty) expect(empty.values.every((v: number | null) => v === null)).toBe(true);
     expect(data.heat).toHaveLength(7);
     expect(data.heat[0]).toHaveLength(24);
     expect(data.live_now).toBeGreaterThanOrEqual(1);
