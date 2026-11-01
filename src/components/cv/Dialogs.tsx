@@ -39,7 +39,7 @@ export function ProjectDialog({ project, onClose, onSaved }: {
     const next: Pending[] = [];
     for (const f of Array.from(files ?? [])) {
       if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(f.type)) { setMsg(`${f.name} is not a supported type. Use a PDF, image, slides, document, video or zip.`); continue; }
-      if (f.size > MAX_FILE_BYTES) { setMsg(`${f.name} is over 5 GB, the most one upload can hold.`); continue; }
+      if (f.size > MAX_FILE_BYTES) { setMsg(`${f.name} is over 100 MB, the most one upload can hold.`); continue; }
       next.push({ key: crypto.randomUUID(), kind: "file", name: f.name, meta: size(f.size), file: f });
     }
     setPending((p) => p.concat(next));
@@ -117,7 +117,7 @@ export function ProjectDialog({ project, onClose, onSaved }: {
                 style={{ display: "grid", justifyItems: "center", gap: 8, padding: 32, borderRadius: 14, border: "1px dashed var(--border-control)", background: "var(--surface-inset)", textAlign: "center", cursor: "pointer", font: "inherit", color: "inherit" }}>
                 <PIcon d={UploadPath} style={{ width: 28, height: 28, color: "var(--text)" }} />
                 <span style={{ color: "var(--text)", fontWeight: 600 }}>Drop a file here or browse</span>
-                <span style={{ color: "var(--text-muted)", fontSize: 12 }}>PDF, images, slides or video. No storage limit.</span>
+                <span style={{ color: "var(--text-muted)", fontSize: 12 }}>PDF, images, slides or video. Up to 100 MB each, 1 GB in total.</span>
               </button>
             </>
           ) : (

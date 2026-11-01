@@ -1,6 +1,6 @@
 # Database
 
-Supabase Postgres 17. Four ordered migrations in `supabase/migrations/`:
+Supabase Postgres 17. Five ordered migrations in `supabase/migrations/`:
 
 | File | Contents |
 |---|---|
@@ -8,6 +8,7 @@ Supabase Postgres 17. Four ordered migrations in `supabase/migrations/`:
 | `…0002_security.sql` | role helpers, signup trigger, slug trigger, activity triggers, RLS, column privileges, owner functions |
 | `…0003_public.sql` | functions anonymous visitors may call |
 | `…0004_admin.sql` | super admin snapshot, account and role changes, delete, invites, live count, Realtime |
+| `…0005_hardening.sql` | server-only counting with per-IP limits (`ip_hash` columns); storage quota and exact upload sizes |
 
 ## Tables
 | Table | Purpose | Key rules |
@@ -28,12 +29,15 @@ activity belong to a profile; deleting an auth user removes everything of theirs
 ## Functions
 **Helpers (used by policies):** `is_super_admin()`, `is_editor()` (active, editor or super admin, terms accepted).
 
-**Owner (authenticated):** `accept_terms()`, `create_file_document(project, name, mime)` (makes the key
-`users/<uid>/projects/<project>/<uuid>.<ext>`), `mark_document_ready(id, size)`, `heartbeat_edit_session(id)`.
+**Owner (authenticated):** `accept_terms()`, `create_file_document(project, name, mime, size)` (checks
+100 MB per file and 1 GB per account, makes the key `users/<uid>/projects/<project>/<uuid>.<ext>`),
+`mark_document_ready(id, size)` (size must equal the reserved size), `heartbeat_edit_session(id)`.
 
 **Public (anon and authenticated):** `get_public_portfolio(slug)` (public fields only, no email; disabled
-returns `{status: "unavailable"}`), `record_visit(slug, visitor)`, `touch_visit(id, visitor)`,
-`open_document(id, visitor)`, `portfolio_stats(slug, range)` with range `7d`, `30d`, `all`.
+returns `{status: "unavailable"}`), `portfolio_stats(slug, range)` with range `7d`, `30d`, `all`.
+
+**Server only (service role):** `record_visit(slug, visitor, ip_hash, viewer)`, `touch_visit(id, visitor)`,
+`open_document(id, visitor, ip_hash, viewer)`, with the per-IP limits in SECURITY.md.
 
 **Super admin (each calls `require_super_admin()` first):** `admin_snapshot()` (every analytic the
 dashboard shows, in one JSON document), `admin_live_now()`, `admin_set_status(user, status)`,

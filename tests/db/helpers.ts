@@ -8,6 +8,8 @@ const opts = { auth: { persistSession: false, autoRefreshToken: false } };
 export const service = () => createClient(url(), process.env.SUPABASE_SERVICE_ROLE_KEY!, opts);
 export const anon = () => createClient(url(), anonKey(), opts);
 export const visitorKey = () => randomBytes(18).toString("base64url");
+/** A random 64-hex value, shaped like the server's HMAC of an IP. */
+export const ipHash = () => randomBytes(32).toString("hex");
 
 export type TestUser = { id: string; email: string; client: SupabaseClient };
 

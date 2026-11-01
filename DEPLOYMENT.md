@@ -10,7 +10,7 @@ Nothing has been deployed. This is the checklist for doing it.
    ```bash
    npx supabase db push
    ```
-   This applies the four files in `supabase/migrations/` in order. Do not run `db reset` against it.
+   This applies the five files in `supabase/migrations/` in order. Do not run `db reset` against it.
 2. Add the founders as super admins (SQL editor), before they first sign in:
    ```sql
    insert into public.admin_allowlist (email) values ('founder1@example.com'), ('founder2@example.com');
@@ -42,7 +42,7 @@ A site was created on your Free team: **projectcv-q9ht** (`projectcv` was taken)
 2. **Visitor access:** the site currently requires Netlify team login for all deploys. Turn that off for
    production (Site configuration > Access & security > Visitor access) or nobody else can open it.
 3. Environment variables (all scopes): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-   `SUPABASE_SERVICE_ROLE_KEY` (secret), `NEXT_PUBLIC_SITE_URL` (the final https origin, no trailing slash),
+   `SUPABASE_SERVICE_ROLE_KEY` (secret), `VISITOR_HASH_SECRET` (secret, `openssl rand -hex 32`), `NEXT_PUBLIC_SITE_URL` (the final https origin, no trailing slash),
    `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` (secret), `R2_SECRET_ACCESS_KEY` (secret), `R2_BUCKET_NAME`.
    Never set `R2_ENDPOINT` in production. `NEXT_PUBLIC_*` values are baked in at build time: redeploy after changing them.
 

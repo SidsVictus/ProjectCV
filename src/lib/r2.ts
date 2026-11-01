@@ -29,8 +29,11 @@ function client(): S3Client {
 
 const bucket = () => required("R2_BUCKET_NAME");
 
-export function presignUpload(key: string, mime: string): Promise<string> {
-  return getSignedUrl(client(), new PutObjectCommand({ Bucket: bucket(), Key: key, ContentType: mime }), { expiresIn: URL_TTL_SECONDS });
+/** The signature covers Content-Length, so the upload must be exactly the reserved size. */
+export function presignUpload(key: string, mime: string, size: number): Promise<string> {
+  return getSignedUrl(client(), new PutObjectCommand({ Bucket: bucket(), Key: key, ContentType: mime, ContentLength: size }), {
+    expiresIn: URL_TTL_SECONDS, signableHeaders: new Set(["content-length", "content-type"]),
+  });
 }
 
 /** Opens inline in a new tab, under the document's own name. */

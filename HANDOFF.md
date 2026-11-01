@@ -23,21 +23,20 @@ by real data. The table styles are your `tables.css`, unchanged.
 
 ## Security
 RLS on every table, column privileges, security-definer functions with explicit execute grants,
-server-made storage keys, 5 minute signed URLs, no secrets in browser bundles, Next.js patched. Details
+server-made storage keys, 100 MB per file and 1 GB per account, 5 minute signed URLs, server-only rate-limited visit counting, a nonce-based Content-Security-Policy, no secrets in browser bundles, Next.js patched. Details
 and known risks: SECURITY.md.
 
 ## Tests
-`bash ./verify`: green (38 unit and DB tests, 12 end-to-end journeys, build, types, lint). TEST_REPORT.md.
+`bash ./verify`: green (42 unit and DB tests, 13 end-to-end journeys, build, types, lint). TEST_REPORT.md.
 
 ## Not verified
 Google sign in, live R2, the hosted Supabase project, Netlify runtime behaviour, reduced motion.
 
 ## What you need to do
-1. Give the Claude GitHub App access to `SidsVictus/ProjectCV` so the branch can be pushed.
-2. Follow DEPLOYMENT.md: push migrations, seed super admin emails, Google provider on and Email off,
+1. Follow DEPLOYMENT.md: push migrations, seed super admin emails, Google provider on and Email off,
    R2 bucket and token, Netlify env vars, turn off Netlify visitor login on `projectcv-q9ht`.
-3. Have the Terms and Privacy pages reviewed.
-4. On the first deploy preview: sign in, upload a file, open the public link in a private window, open `/admin`.
+2. Have the Terms and Privacy pages reviewed.
+3. On the first deploy preview: sign in, upload a file, open the public link in a private window, open `/admin`.
 
 ## Run locally
 See README.md (`npm install`, `npm run db:start`, `.env.local`, `node scripts/r2-mock.mjs`, `npm run dev`).

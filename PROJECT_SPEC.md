@@ -72,7 +72,7 @@ exports CSV), custom domains, payments.
 
 ## 8. Assumptions
 - A1 "Viewer" as an account role means a signed-in person who cannot build a page.
-- A2 "No storage cap" means no per-user quota; a single file is limited to R2's 5 GiB single-PUT limit.
+- A2 Superseded by the owner on 2 November 2026: 100 MB per file and 1 GB per account (security hardening).
 - A3 Colleges for the admin sky are grouped from the free-text "College or organisation" field
   (top 10 named, the rest "Other organisations").
 - A4 "Came back" (retention) means an editing session that started at least one day after signup.

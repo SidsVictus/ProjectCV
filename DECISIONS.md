@@ -18,3 +18,6 @@
 | D14 | Deviations from supplied CSS live in `src/styles/fixes.css`, each with the bug it fixes; the one exception is the declaration order of `backdrop-filter` in `whosaw.css` (values unchanged), noted in that file. | Keeps the supplied files as they are and makes every change reviewable. |
 | D15 | Next.js upgraded from 16.3.5 to 16.4.3. | 16.3.5 has a critical remote code execution advisory and six others; 16.4.3 has none. |
 | D16 | The table picker shows neutral placeholder rows ("Your first project") only while a page is empty, instead of the prototype's sample projects. | No prototype sample data in the product. |
+| D17 | Visit and file-open counting is server only (service role) and limited per network by an HMAC of the IP. | Stops scripted inflation without storing IPs. |
+| D18 | Storage quota: 100 MB per file, 1 GB per account, exact upload size (signed Content-Length, HEAD, database check). | Owner's request to close the "no storage cap" risk. |
+| D19 | CSP with a per-request script nonce and 'strict-dynamic'; styles allow inline. | The design system uses style attributes; scripts are where injection runs. |

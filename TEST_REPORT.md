@@ -11,12 +11,12 @@ Run on 1 November 2026, in the cloud container used to build the project.
 ## Commands and results
 | Command | Result |
 |---|---|
-| `bash ./verify` | **green** in 1m54s (all steps below) |
+| `bash ./verify` | **green** (all steps below; rerun after the security hardening) |
 | `tsc --noEmit` | pass |
 | `eslint .` | pass |
-| `vitest run` (unit + DB) | 38 of 38 pass (15 unit, 23 DB) |
+| `vitest run` (unit + DB) | 42 of 42 pass (15 unit, 27 DB) |
 | `next build` | pass, 18 routes + proxy |
-| `playwright test` | 12 of 12 pass (desktop 1440x900; 3 also at 390x844) |
+| `playwright test` | 13 of 13 pass (desktop 1440x900; 3 also at 390x844) |
 | `supabase db lint --local` | no findings |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 
@@ -38,6 +38,10 @@ Run on 1 November 2026, in the cloud container used to build the project.
 - **E2E admin (1 long journey):** real totals, no sample text, no NaN, no page errors; on hold keeps the
   page public and blocks the owner; disabled takes the page offline; role change; self change refused;
   add user; delete everywhere; a new project arrives in the live feed over Realtime; CSV export.
+- **DB hardening (4):** browsers cannot call counting functions; per-IP visit and open limits; 100 MB and
+  1 GB quota with pending uploads counted; exact upload size.
+- **E2E CSP (1):** header present, nonce changes per request, no `unsafe-eval`, no CSP violations or page
+  errors on public page, stats card (three.js), owner page, table picker and admin dashboard (three.js, Realtime).
 - **E2E responsive (6):** no horizontal scroll at 390px on owner, public, setup and admin pages; stats
   card fits a phone; sign in screen.
 

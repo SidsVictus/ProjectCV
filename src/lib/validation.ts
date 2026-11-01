@@ -42,7 +42,7 @@ export const uploadSchema = z.object({
   projectId: z.uuid(),
   name: text(200).min(1),
   mime: z.enum(ALLOWED_MIME_TYPES),
-  size: z.number().int().positive().max(MAX_FILE_BYTES, "That file is over 5 GB, the most one upload can hold."),
+  size: z.number().int().positive().max(MAX_FILE_BYTES, "That file is over 100 MB, the most one upload can hold."),
 });
 
 export const statusSchema = z.enum(["active", "on_hold", "disabled"]);

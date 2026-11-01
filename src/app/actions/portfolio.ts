@@ -122,10 +122,11 @@ export async function startUpload(input: unknown): Promise<Result<{ id: string; 
   const { supabase, user } = await session();
   if (!user) return fail("Please sign in again.");
   const { data, error } = await supabase.rpc("create_file_document",
-    { p_project: parsed.data.projectId, p_name: parsed.data.name, p_mime: parsed.data.mime });
+    { p_project: parsed.data.projectId, p_name: parsed.data.name, p_mime: parsed.data.mime, p_size: parsed.data.size });
+  if (error?.code === "53400") return fail("Your documents have reached the 1 GB limit. Remove a file to add another.");
   if (error || !data) { console.error("startUpload", error?.message); return fail(GENERIC); }
   try {
-    return { ok: true, data: { id: data.id, url: await presignUpload(data.object_key, parsed.data.mime) } };
+    return { ok: true, data: { id: data.id, url: await presignUpload(data.object_key, parsed.data.mime, parsed.data.size) } };
   } catch (e) {
     console.error("presignUpload", (e as Error).message);
     await supabase.from("documents").delete().eq("id", data.id);
@@ -139,10 +140,11 @@ export async function finishUpload(id: unknown): Promise<Result> {
   if (!parsed.success) return fail(GENERIC);
   const { supabase, user } = await session();
   if (!user) return fail("Please sign in again.");
-  const { data: doc } = await supabase.from("documents").select("object_key,mime,ready").eq("id", parsed.data).single();
+  const { data: doc } = await supabase.from("documents").select("object_key,mime,size_bytes,ready").eq("id", parsed.data).single();
   if (!doc?.object_key) return fail(GENERIC);
   const head = await headObject(doc.object_key);
-  if (!head || head.size === 0 || head.type !== doc.mime) {
+  // Must be exactly the reserved size and type, or it is removed (and stops counting towards the quota).
+  if (!head || head.size !== doc.size_bytes || head.type !== doc.mime) {
     await supabase.from("documents").delete().eq("id", parsed.data);
     if (head) await cleanUp([doc.object_key]);
     return fail("That upload did not finish. Please try again.");
