@@ -1,0 +1,54 @@
+/* "Who saw your page" card from user-mini-dashboard_for_who_say_your_page.zip, rules unchanged,
+   scoped under .whosaw so they do not leak into the portfolio page. */
+.whosaw {
+  --ink: #141414; --muted: #5b574f; --glass: rgba(255, 255, 255, 0.74); --edge: rgba(255, 255, 255, 0.65); --track: rgba(20, 20, 20, 0.09);
+  --display: "Boska", Georgia, serif;
+  --sans: Aptos, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --glide: cubic-bezier(.22, 1, .36, 1);
+}
+.whosaw .pill {
+  display: inline-flex; align-items: center; gap: 12px; padding: 8px 18px 8px 8px; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 24px 48px -24px rgba(40, 24, 8, .45);
+}
+.whosaw .pill__eye { width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; flex: none; }
+.whosaw .pill__eye .lid { transform-origin: 12px 12px; animation: whosaw-blink 5.2s infinite; }
+.whosaw .pill__eye .pupil { transition: transform 180ms var(--glide); }
+@keyframes whosaw-blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
+.whosaw .pill b { display: block; font: 600 20px/22px var(--sans); }
+.whosaw .pill span { font-size: 13px; line-height: 16px; }
+.whosaw .card {
+  margin-top: 14px; padding: 26px; border-radius: 24px;
+  background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(24px) saturate(130%); -webkit-backdrop-filter: blur(24px) saturate(130%);
+  box-shadow: 0 40px 90px -40px rgba(40, 24, 8, .55);
+  animation: whosaw-rise 900ms var(--glide) both;
+}
+@keyframes whosaw-rise { from { opacity: 0; transform: translateY(18px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.whosaw .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.whosaw h1, .whosaw .card > .head h2 { margin: 0; font: italic 300 32px/38px var(--display); }
+.whosaw .seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--track); }
+.whosaw .seg button { border: 0; background: none; font: 600 14px/1 var(--sans); color: var(--ink); height: 34px; padding: 0 14px; border-radius: 999px; }
+.whosaw .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.whosaw .seg button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.whosaw .stats { display: flex; align-items: flex-end; gap: 32px; flex-wrap: wrap; margin-top: 18px; }
+.whosaw .big { font: italic 300 88px/84px var(--display); letter-spacing: -0.02em; }
+.whosaw .label { color: var(--muted); font-size: 14px; }
+.whosaw .stats b { display: block; font: italic 300 34px/38px var(--display); }
+.whosaw .overline { margin: 26px 0 6px; font: 600 12px/16px var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.whosaw .overline span { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.whosaw .stream { position: relative; height: 250px; margin: 0 -10px; }
+.whosaw .stream canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.whosaw .stream .lbl { position: absolute; transform: translate(-50%, 0); font-size: 13px; font-weight: 600; pointer-events: none; transition: opacity 260ms var(--glide); }
+.whosaw .stream .val { position: absolute; transform: translate(-50%, -100%); font: italic 300 26px/1 var(--display); pointer-events: none; transition: opacity 260ms var(--glide); white-space: nowrap; }
+.whosaw .stream .val small { font: 400 12px/1 var(--sans); color: var(--muted); margin-left: 4px; }
+.whosaw .file { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 12px; font-size: 15px; }
+.whosaw .file b { font-weight: 600; }
+.whosaw .file .track { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.whosaw .file .track i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--ink); transition: width 1200ms var(--glide); }
+.whosaw .foot { margin: 20px 0 0; font-size: 14px; color: var(--muted); }
+@media (max-width: 560px) { .whosaw .big { font-size: 72px; line-height: 72px; } .whosaw .card { padding: 20px; } .whosaw .stream { height: 220px; } }
+@media (prefers-reduced-motion: reduce) { .whosaw * { animation: none !important; transition-duration: 1ms !important; } }
+
+/* Placement: opens from the eye pill like an iris (prototype .stats-panel position and iris-open). */
+.whosaw-pop { position: absolute; left: 0; top: calc(100% - 2px); z-index: 8; width: min(640px, calc(100vw - 48px)); animation: iris-open 900ms var(--satin-glide) both; }
+.whosaw-pop .card { box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .6); }

@@ -1,12 +1,12 @@
 /* Project CV · Super Admin · app
-   Wires sample data to the page: range switching, KPIs, charts, the constellation, live feed, users table, drawer, palette. */
+   Wires live data (window.PCV_DATA from admin_snapshot, window.PCV_API for changes) to the page: range switching, KPIs, charts, the constellation, live feed, users table, drawer, palette. */
 (function () {
   "use strict";
   const D = window.PCV_DATA, C = window.PCV_CHARTS, SC = window.PCV_SCENES;
   const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const fmt = C.fmt, esc = C.esc;
-  const ME = "Siddharth Sadu";
+  const ME = D.me, API = window.PCV_API, OTHER = D.COLLEGES.length - 1;
   const state = { range: 30, trendMetric: "signups", status: "", query: "", page: 8 };
 
   // ---------- helpers ----------
@@ -14,6 +14,8 @@
   const sum = (a, from, to) => { let s = 0; for (let i = from; i < Math.min(to, a.length); i++) s += a[i]; return s; };
   const mean = (a, from, to) => sum(a, from, to) / Math.max(1, Math.min(to, a.length) - from);
   const pctChange = (cur, prev) => (prev ? ((cur - prev) / prev) * 100 : 0);
+  const share = (a, b) => (b ? a / b : 0);
+  const pts = (d) => (d >= 0 ? "▲ " : "▼ ") + Math.abs(d) + " pts";
   const dateAgo = (d) => { const t = new Date(D.now); t.setDate(t.getDate() - d); return t; };
   const dShort = (d) => dateAgo(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
   const mins = (m) => { const mm = Math.floor(m), ss = Math.round((m - mm) * 60); return mm + "m " + String(ss).padStart(2, "0") + "s"; };
@@ -95,7 +97,7 @@
       { label: "Active portfolios", value: activeNow, f: fmt, deltaText: "+" + fmt(activeNew), ctx: "with a project", spark: spark(d.projectsAdded) },
       { label: "Page views", value: viewsNow, f: (v) => C.compact(v), delta: all ? null : pctChange(viewsNow, viewsPrev), ctx: all ? "across every portfolio" : prevLabel(), spark: spark(d.pageViews) },
       { label: "Avg. time editing", value: editNow, f: mins, delta: all ? null : pctChange(editNow, editPrev), ctx: "per session", spark: spark(d.editMinutes, "mean") },
-      { label: "Came back", value: ret.d30, f: (v) => Math.round(v) + "%", deltaText: "▲ " + (ret.d30 - ret.prev.d30) + " pts", ctx: "back by day 30", spark: D.cohorts.slice(0, 11).map((c) => c.values[1]) }
+      { label: "Came back", value: ret.d30, f: (v) => Math.round(v) + "%", deltaText: pts(ret.d30 - ret.prev.d30), ctx: "back by day 30", spark: D.cohorts.slice(0, 11).map((c) => c.values[1]) }
     ];
   }
   function renderKPIs(first) {
@@ -135,36 +137,42 @@
   }
   function renderSkyNumbers() { countTo($("#skyVisitors"), sum(D.daily.visitorsDaily, 0, days()), C.compact); }
 
-  const EVENTS = [
-    { t: (u) => "<b>" + esc(u.name) + "</b> added a project", warm: false },
-    { t: (u) => "<b>" + esc(u.name) + "</b> uploaded Certificate.pdf", warm: false },
-    { t: (u) => "<b>" + esc(u.name) + "</b> attached a GitHub link", warm: false },
-    { t: (u) => "Someone opened <b>" + esc(first(u.name)) + "'s</b> portfolio", warm: true },
-    { t: (u) => "A viewer opened a file on <b>" + esc(first(u.name)) + "'s</b> page", warm: true },
-    { t: (u) => "<b>" + esc(u.name) + "</b> switched to " + esc(D.WALLPAPERS[u.wallpaper].name), warm: false },
-    { t: (u) => "<b>" + esc(u.name) + "</b> signed up from " + esc(D.COLLEGES[u.college].short), warm: false }
-  ];
+  const wpName = (id) => { const w = D.WALLPAPERS.find((x) => x.id === id); return w ? w.name : "a new wallpaper"; };
+  const EVENTS = {
+    edit: { t: (u, ev) => "<b>" + esc(u.name) + "</b> added " + (ev.detail ? esc(ev.detail) : "a project"), warm: false },
+    upload: { t: (u, ev) => "<b>" + esc(u.name) + "</b> uploaded " + esc(ev.detail || "a file"), warm: false },
+    link: { t: (u, ev) => "<b>" + esc(u.name) + "</b> attached a link to " + esc(ev.detail || "a project"), warm: false },
+    visit: { t: (u) => "Someone opened <b>" + esc(first(u.name)) + "'s</b> portfolio", warm: true },
+    file_open: { t: (u) => "A viewer opened a file on <b>" + esc(first(u.name)) + "'s</b> page", warm: true },
+    style: { t: (u, ev) => "<b>" + esc(u.name) + "</b> switched to " + esc(wpName(ev.detail)), warm: false },
+    signup: { t: (u) => "<b>" + esc(u.name) + "</b> signed up" + (u.college !== OTHER ? " from " + esc(D.COLLEGES[u.college].short) : ""), warm: false }
+  };
   function liveFeed() {
     const feed = $("#feed"), users = D.users;
-    function push(silent) {
-      let i; do { i = Math.floor(Math.random() * users.length); } while (users[i].status !== "Active" || users[i].deleted);
-      const u = users[i], ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+    const agoShort = (ms) => { const s2 = Math.max(0, Math.round(ms / 1000)); return s2 < 45 ? "now" : s2 < 3600 ? Math.round(s2 / 60) + "m" : s2 < 86400 ? Math.round(s2 / 3600) + "h" : Math.round(s2 / 86400) + "d"; };
+    function push(ev, silent) {
+      const i = users.findIndex((x) => x.id === ev.user_id), u = users[i], kind = EVENTS[ev.kind];
+      if (!u || u.deleted || !kind) return;
       const li = document.createElement("li");
-      li.innerHTML = '<span class="avatar avatar--xs' + (ev.warm ? " avatar--warm" : "") + '">' + esc(u.name.charAt(0)) + "</span><span>" + ev.t(u) + "</span><time>now</time>";
+      li.innerHTML = '<span class="avatar avatar--xs' + (kind.warm ? " avatar--warm" : "") + '">' + esc(u.name.charAt(0)) + "</span><span>" + kind.t(u, ev) + "</span><time></time>";
+      li._at = ev.at ? new Date(ev.at).getTime() : Date.now();
       li.addEventListener("click", () => openDrawer(u)); li.style.cursor = "pointer";
       feed.prepend(li);
-      $$("time", feed).forEach((t, k) => { t.textContent = k === 0 ? "now" : k * 3 + "s"; });
       while (feed.children.length > 9) feed.lastChild.remove();
-      if (!silent && sky) sky.ping(i, ev.warm);
+      stamp();
+      if (!silent && sky) sky.ping(i, kind.warm);
     }
-    for (let k = 0; k < 7; k++) push(true);
-    if (!REDUCED) setInterval(() => { if (!document.hidden) push(false); }, 2800);
-    const lc = $("#liveCount"); let live = 24;
-    if (!REDUCED) setInterval(() => { live = Math.max(12, Math.min(38, live + Math.round((Math.random() - 0.5) * 4))); lc.textContent = live; }, 4000);
+    function stamp() { $$("li", feed).forEach((li) => { const t = $("time", li); if (t) t.textContent = agoShort(Date.now() - li._at); }); }
+    D.feed.slice().reverse().forEach((ev) => push(ev, true));
+    if (!feed.children.length) feed.innerHTML = '<li class="caption" style="cursor:default">Edits, uploads and visits appear here as they happen.</li>';
+    API.subscribe((ev) => { const e = $("li.caption", feed); if (e) e.remove(); push(ev, false); });
+    setInterval(stamp, 30000);
+    const lc = $("#liveCount"); lc.textContent = D.liveNow;
+    setInterval(() => { if (!document.hidden) API.liveNow().then((n) => { if (n != null) lc.textContent = n; }); }, 20000);
   }
   function renderHealth() {
-    const users = alive(), withProj = users.filter((u) => u.projects > 0).length / users.length * 100;
-    const r = days(), fileShare = (sum(D.daily.filesOpened, 0, r) / sum(D.daily.visitorsDaily, 0, r)) * 100;
+    const users = alive(), withProj = share(users.filter((u) => u.projects > 0).length, users.length) * 100;
+    const r = days(), fileShare = Math.min(100, share(sum(D.daily.filesOpened, 0, r), sum(D.daily.visitorsDaily, 0, r)) * 100);
     countTo($("#hActiveShare"), withProj, (v) => Math.round(v) + "%"); countTo($("#hFileShare"), fileShare, (v) => Math.round(v) + "%");
     whenVisible($("#hActiveBar"), () => { $("#hActiveBar").style.width = withProj + "%"; $("#hFileBar").style.width = fileShare + "%"; });
   }
@@ -221,9 +229,10 @@
       { label: "Day 30", long: "Came back within a month", value: R.d30, prev: R.prev.d30, color: "#e2834f" }
     ];
     C.rings($("#rings"), items);
-    $("#ringLegend").innerHTML = items.map((it) => '<div class="row"><span class="bar" style="background:' + it.color + '"></span><div><p class="overline">' + it.label + '</p><span class="big tnum">' + it.value + '%</span> <span class="delta">▲ ' + (it.value - it.prev) + " pts</span></div></div>").join("");
-    const old = D.cohorts[0].values[4], recent = D.cohorts[7].values[4];
-    $("#retInsight").textContent = "Newer cohorts come back more. Week 4 return rose from " + old + "% for people who joined " + D.cohorts[0].label + " to " + recent + "% for those who joined " + D.cohorts[7].label + ".";
+    $("#ringLegend").innerHTML = items.map((it) => '<div class="row"><span class="bar" style="background:' + it.color + '"></span><div><p class="overline">' + it.label + '</p><span class="big tnum">' + it.value + '%</span> <span class="delta' + (it.value < it.prev ? " delta--down" : "") + '">' + pts(it.value - it.prev) + "</span></div></div>").join("");
+    const old = D.cohorts[0], recent = D.cohorts[7], a = old.values[4], b = recent.values[4];
+    $("#retInsight").textContent = !old.size || !recent.size ? "Cohort trends appear once people have been signing up for a few weeks."
+      : "Week 4 return " + (b > a ? "rose" : b < a ? "fell" : "held") + " from " + a + "% for people who joined " + old.label + " to " + b + "% for those who joined " + recent.label + ".";
   }
   function terrainColor(v) {
     const stops = [[0, [122, 58, 34]], [0.22, [226, 131, 79]], [0.42, [240, 180, 90]], [0.62, [188, 207, 103]], [1, [246, 227, 192]]], x = Math.max(0, Math.min(1, (v - 15) / 60));
@@ -246,7 +255,11 @@
   }
   function renderEngagement() {
     C.heatmap($("#heatmap"), D.heat);
-    const users = alive(), s = users.map((u) => u.sessions).sort((a, b) => a - b), median = s[Math.floor(s.length / 2)];
+    const WD = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], hr = (h) => (h === 0 ? "midnight" : h < 12 ? h + " am" : h === 12 ? "noon" : h - 12 + " pm");
+    let hi = [0, 0], lo = [0, 0];
+    D.heat.forEach((row, d) => row.forEach((v, h) => { if (v > D.heat[hi[0]][hi[1]]) hi = [d, h]; if (v < D.heat[lo[0]][lo[1]]) lo = [d, h]; }));
+    $("#heatInsight").textContent = D.heat[hi[0]][hi[1]] ? WD[hi[0]] + " around " + hr(hi[1]) + " is the busiest time. " + WD[lo[0]] + " around " + hr(lo[1]) + " is the quietest, a good time for maintenance." : "Editing sessions appear here once people start editing.";
+    const users = alive(), s = users.map((u) => u.sessions).sort((a, b) => a - b), median = s.length ? s[Math.floor(s.length / 2)] : 0;
     const binsDef = [["1", 1, 1], ["2", 2, 2], ["3", 3, 3], ["4", 4, 4], ["5", 5, 5], ["6 to 8", 6, 8], ["9+", 9, 999]];
     const bins = binsDef.map((b) => ({ label: b[0], value: s.filter((x) => x >= b[1] && x <= b[2]).length, hi: median >= b[1] && median <= b[2] }));
     countTo($("#mSessions"), median, (v) => Math.round(v));
@@ -257,30 +270,32 @@
     const bar = $("#lastActiveBar");
     bar.innerHTML = groups.map((g, k) => '<i style="background:' + g[3] + '" data-g="' + counts[k] + '"></i>').join("");
     $("#lastActiveLegend").innerHTML = groups.map((g, k) => '<span><i class="sw" style="background:' + g[3] + '"></i>' + g[0] + "<b>" + fmt(counts[k]) + "</b></span>").join("");
-    countTo($("#mWeekly"), ((counts[0] + counts[1]) / users.length) * 100, (v) => Math.round(v) + "%");
+    countTo($("#mWeekly"), share(counts[0] + counts[1], users.length) * 100, (v) => Math.round(v) + "%");
     whenVisible(bar, () => $$("i", bar).forEach((i) => { i.style.flexGrow = i.dataset.g; }));
   }
 
   /* ================================================================= Reach */
   function renderReach() {
-    const r = days(), share = sum(D.daily.visitorsDaily, 0, r) / sum(D.daily.visitorsDaily, 0, D.DAYS);
-    const top = alive().filter((u) => u.status !== "Disabled").sort((a, b) => b.visitors - a.visitors).slice(0, 8);
-    const max = top[0].visitors * share;
+    const r = days(), key = state.range === "all" ? null : String(state.range);
+    const vis = (u) => (key ? u.visitorsR[key] : u.visitors), opened = (u) => (key ? u.filesR[key] : u.filesOpened);
+    const top = alive().filter((u) => u.status !== "Disabled" && vis(u) > 0).sort((a, b) => vis(b) - vis(a)).slice(0, 8);
+    const max = top.length ? vis(top[0]) : 1;
     const tb = $("#leaderboard tbody");
     tb.innerHTML = top.map((u, i) => {
-      const v = Math.max(1, Math.round(u.visitors * share));
-      return '<tr class="clickable" data-id="' + u.id + '"><td><div class="user-cell"><span class="rank">' + (i + 1) + '</span><span class="avatar avatar--sm' + (i === 0 ? " avatar--warm" : "") + '">' + esc(u.name.charAt(0)) + '</span><div><div class="user-cell__name">' + esc(u.name) + '</div><div class="user-cell__mail">' + esc(D.COLLEGES[u.college].short) + " · " + u.projects + (u.projects === 1 ? " project" : " projects") + '</div></div></div></td><td><div class="inline-bar"><span class="track"><i data-w="' + ((v / max) * 100).toFixed(1) + '"' + (i === 0 ? ' style="background:linear-gradient(90deg,#bccf67,#f6e3c0)"' : "") + '></i></span><b>' + fmt(v) + "</b></div></td><td>" + secs(u.avgViewSec) + "</td><td>" + fmt(Math.round(u.filesOpened * share)) + '</td><td><button class="link-btn" type="button">Open</button></td></tr>';
-    }).join("");
+      const v = vis(u);
+      return '<tr class="clickable" data-id="' + u.id + '"><td><div class="user-cell"><span class="rank">' + (i + 1) + '</span><span class="avatar avatar--sm' + (i === 0 ? " avatar--warm" : "") + '">' + esc(u.name.charAt(0)) + '</span><div><div class="user-cell__name">' + esc(u.name) + '</div><div class="user-cell__mail">' + esc(D.COLLEGES[u.college].short) + " · " + u.projects + (u.projects === 1 ? " project" : " projects") + '</div></div></div></td><td><div class="inline-bar"><span class="track"><i data-w="' + ((v / max) * 100).toFixed(1) + '"' + (i === 0 ? ' style="background:linear-gradient(90deg,#bccf67,#f6e3c0)"' : "") + '></i></span><b>' + fmt(v) + "</b></div></td><td>" + secs(u.avgViewSec) + "</td><td>" + fmt(opened(u)) + '</td><td><button class="link-btn" type="button">Open</button></td></tr>';
+    }).join("") || '<tr><td colspan="5" style="padding:24px 16px;text-align:center;color:var(--text-muted)">No portfolio visits in ' + rangeLabel() + ' yet.</td></tr>';
     whenVisible(tb, () => $$(".track i", tb).forEach((i, k) => setTimeout(() => { i.style.width = i.dataset.w + "%"; }, k * 60)));
 
     const views = sum(D.daily.pageViews, 0, r), vPrev = sum(D.daily.pageViews, r, 2 * r);
     countTo($("#rViews"), views, C.compact);
     $("#rViewsSub").textContent = state.range === "all" ? "since launch" : (views >= vPrev ? "Up " : "Down ") + Math.abs(pctChange(views, vPrev)).toFixed(0) + "% on the period before";
     countTo($("#rTime"), mean(D.daily.viewSeconds, 0, r), secs);
-    const totalFiles = sum(D.daily.filesOpened, 0, r), wsum = D.FILES.reduce((s, f) => s + f.w, 0);
+    const totalFiles = sum(D.daily.filesOpened, 0, r), fk = state.range === "all" ? "all" : String(state.range);
     $("#rFilesTotal").textContent = fmt(totalFiles) + " opens";
-    const host = $("#filesBars");
-    host.innerHTML = D.FILES.slice(0, 6).map((f) => '<div class="hbar"><span class="hbar__label">' + esc(f.name) + '</span><span class="hbar__val">' + fmt((totalFiles * f.w) / wsum) + ' opens</span><span class="hbar__track"><i data-w="' + (f.w * 100).toFixed(0) + '"></i></span></div>').join("");
+    const host = $("#filesBars"), files = D.FILES.filter((f) => f.opens[fk] > 0).sort((a, b) => b.opens[fk] - a.opens[fk]).slice(0, 6);
+    host.innerHTML = files.map((f) => '<div class="hbar"><span class="hbar__label">' + esc(f.name) + '</span><span class="hbar__val">' + fmt(f.opens[fk]) + ' opens</span><span class="hbar__track"><i data-w="' + ((f.opens[fk] / files[0].opens[fk]) * 100).toFixed(0) + '"></i></span></div>').join("")
+      || '<p class="caption">No files opened in ' + rangeLabel() + '.</p>';
     whenVisible(host, () => $$("i", host).forEach((i, k) => setTimeout(() => { i.style.width = i.dataset.w + "%"; }, k * 70)));
   }
 
@@ -288,18 +303,18 @@
   function renderCustom() {
     const users = alive(), N = users.length;
     const count = (key, len) => { const c = new Array(len).fill(0); users.forEach((u) => c[u[key]]++); return c; };
-    const wp = count("wallpaper", D.WALLPAPERS.length), order = wp.map((n, i) => ({ n, i })).sort((a, b) => b.n - a.n), wmax = order[0].n;
+    const wp = count("wallpaper", D.WALLPAPERS.length), order = wp.map((n, i) => ({ n, i })).sort((a, b) => b.n - a.n), wmax = order[0].n || 1;
     const host = $("#wallpapers");
     host.innerHTML = order.map((o, k) => { const w = D.WALLPAPERS[o.i]; return '<div class="wp' + (k === 0 ? " wp--top" : "") + '"><div class="wp__thumb" style="background:' + w.css + '"></div><div class="wp__meta"><span>' + esc(w.name) + "</span><b>" + Math.round((o.n / N) * 100) + '%</b></div><div class="meter' + (k === 0 ? " meter--warm" : "") + '"><i data-w="' + ((o.n / wmax) * 100).toFixed(0) + '"></i></div></div>'; }).join("");
     whenVisible(host, () => $$(".meter i", host).forEach((i, k) => setTimeout(() => { i.style.width = i.dataset.w + "%"; }, k * 60)));
 
-    const ts = count("tableStyle", D.TABLE_STYLES.length), tmax = Math.max.apply(null, ts);
+    const ts = count("tableStyle", D.TABLE_STYLES.length), tmax = Math.max.apply(null, ts) || 1;
     const th = $("#tableStyles");
     th.innerHTML = D.TABLE_STYLES.map((t, i) => ({ t, n: ts[i] })).sort((a, b) => b.n - a.n).map((x) => '<div class="hbar"><span class="hbar__label">' + esc(x.t.name) + '</span><span class="hbar__val">' + Math.round((x.n / N) * 100) + '%</span><span class="hbar__track"><i data-w="' + ((x.n / tmax) * 100).toFixed(0) + '"></i></span></div>').join("");
     whenVisible(th, () => $$("i", th).forEach((i, k) => setTimeout(() => { i.style.width = i.dataset.w + "%"; }, k * 70)));
 
     const sw = (sel, list, key) => {
-      const c = count(key, list.length), mx = Math.max.apply(null, c);
+      const c = count(key, list.length), mx = Math.max.apply(null, c) || 1;
       $(sel).innerHTML = list.map((x, i) => ({ x, n: c[i] })).sort((a, b) => b.n - a.n).map((o) => { const s = 16 + (o.n / mx) * 30; return '<div class="swatch" title="' + esc(o.x.name) + '"><i style="width:' + s + "px;height:" + s + "px;background:" + (o.x.solid || o.x.hex) + '"></i><b>' + Math.round((o.n / N) * 100) + "%</b>" + esc(o.x.name) + "</div>"; }).join("");
     };
     sw("#textColours", D.TEXT_COLOURS, "textColour");
@@ -310,27 +325,32 @@
   function renderAccounts() {
     const users = alive(), N = users.length;
     const st = { Active: 0, "On hold": 0, Disabled: 0 }; users.forEach((u) => st[u.status]++);
+    const pctOf = (n) => share(n, N) * 100;
     $("#accTotal").textContent = fmt(N) + " total";
     const badge = { Active: "badge--active", "On hold": "badge--hold", Disabled: "badge--disabled" };
     const host = $("#statusRows");
-    host.innerHTML = Object.keys(st).map((k) => '<div class="status-row"><div class="status-row__top"><span class="badge ' + badge[k] + '">' + k + '</span><b class="tnum">' + fmt(st[k]) + '</b></div><div class="meter' + (k === "On hold" ? " meter--warm" : "") + '"><i data-w="' + ((st[k] / N) * 100).toFixed(1) + '"' + (k === "Disabled" ? ' style="background:var(--olive-500)"' : "") + "></i></div></div>").join("");
+    host.innerHTML = Object.keys(st).map((k) => '<div class="status-row"><div class="status-row__top"><span class="badge ' + badge[k] + '">' + k + '</span><b class="tnum">' + fmt(st[k]) + '</b></div><div class="meter' + (k === "On hold" ? " meter--warm" : "") + '"><i data-w="' + pctOf(st[k]).toFixed(1) + '"' + (k === "Disabled" ? ' style="background:var(--olive-500)"' : "") + "></i></div></div>").join("");
     whenVisible(host, () => $$("i", host).forEach((i, k) => setTimeout(() => { i.style.width = Math.max(1, +i.dataset.w) + "%"; }, k * 90)));
 
     const roles = [{ label: "Editor", color: "#bccf67" }, { label: "Viewer", color: "#8e9c4e" }, { label: "Super admin", color: "#f0b45a" }];
     roles.forEach((r) => { r.value = users.filter((u) => u.role === r.label).length; });
     C.donut($("#rolesDonut"), roles);
-    $("#rolesLegend").innerHTML = roles.map((r) => '<div class="row"><span class="bar" style="background:' + r.color + '"></span><div><p class="overline">' + r.label + '</p><span class="tnum" style="font-weight:600">' + fmt(r.value) + '</span> <span class="caption">' + ((r.value / N) * 100).toFixed(1) + "%</span></div></div>").join("");
+    $("#rolesLegend").innerHTML = roles.map((r) => '<div class="row"><span class="bar" style="background:' + r.color + '"></span><div><p class="overline">' + r.label + '</p><span class="tnum" style="font-weight:600">' + fmt(r.value) + '</span> <span class="caption">' + pctOf(r.value).toFixed(1) + "%</span></div></div>").join("");
 
-    const holdOld = users.filter((u) => u.status === "On hold").length, disOld = users.filter((u) => u.status === "Disabled" && u.lastActive >= 30).length;
-    const unknown = users.filter((u) => u.college === 10 && u.signupDay < days()).length;
+    const held = users.filter((u) => u.status === "On hold").sort((a, b) => b.statusDays - a.statusDays);
+    const disOld = users.filter((u) => u.status === "Disabled" && u.lastActive >= 30).length;
+    const unknown = users.filter((u) => u.college === OTHER && u.signupDay < days()).length;
+    const waited = (d) => (d === 0 ? "since today" : d === 1 ? "1 day" : d + " days");
     const att = [
-      { ico: "i-flag", title: "3 portfolios reported by viewers", text: "Oldest report waiting 2 days", act: "Review", fn: () => toast("Opening reports. This screen is next on the build list.") },
-      { ico: "i-pause", title: holdOld + " accounts on hold", text: "Meera Iyer has waited 12 days", act: "Review", fn: () => { setStatusFilter("On hold"); $("#users").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" }); } },
-      { ico: "i-moon", title: disOld + " disabled accounts gone quiet", text: "No sign in for 30 days or more", act: "Review", fn: () => { setStatusFilter("Disabled"); $("#users").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" }); } },
-      { ico: "i-building", title: unknown + " signups from unlisted organisations", text: "Add their college so reports group them", act: "Sort", fn: () => toast("Organisation matching opens here in the full build.") }
-    ];
+      held.length && { ico: "i-pause", title: held.length + (held.length === 1 ? " account on hold" : " accounts on hold"), text: held[0].name + " has waited " + waited(held[0].statusDays), act: "Review", fn: () => { setStatusFilter("On hold"); $("#users").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" }); } },
+      disOld && { ico: "i-moon", title: disOld + " disabled accounts gone quiet", text: "No sign in for 30 days or more", act: "Review", fn: () => { setStatusFilter("Disabled"); $("#users").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" }); } },
+      unknown && { ico: "i-building", title: unknown + " signups from unlisted organisations", text: "They have no college, or one too small to list", act: "Show", fn: () => { state.query = "Other"; $("#userSearch").value = "Other"; setStatusFilter(""); $("#users").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" }); } }
+    ].filter(Boolean);
+    $("#bellBtn").setAttribute("aria-label", att.length ? "Notifications, " + att.length + " need attention" : "Notifications, nothing needs attention");
+    const ping = $("#bellBtn .ping"); if (ping) ping.hidden = !att.length;
     const ul = $("#attention");
-    ul.innerHTML = att.map((a, i) => '<li><span class="att-ico"><svg class="ico"><use href="#' + a.ico + '"/></svg></span><span><b>' + esc(a.title) + "</b>" + esc(a.text) + '</span><button class="btn btn--secondary btn--sm" type="button" data-i="' + i + '">' + a.act + "</button></li>").join("");
+    ul.innerHTML = att.length ? "" : '<li><span><b>Nothing needs a look</b>Accounts on hold and quiet ones show up here</span></li>';
+    ul.innerHTML += att.map((a, i) => '<li><span class="att-ico"><svg class="ico"><use href="#' + a.ico + '"/></svg></span><span><b>' + esc(a.title) + "</b>" + esc(a.text) + '</span><button class="btn btn--secondary btn--sm" type="button" data-i="' + i + '">' + a.act + "</button></li>").join("");
     ul.onclick = (e) => { const b = e.target.closest("button"); if (b) att[+b.dataset.i].fn(); };
   }
   function renderAudit() {
@@ -404,9 +424,11 @@
     current = null; if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
   function logChange(text) { D.AUDIT.unshift({ who: ME, text, when: 0, fresh: true }); renderAudit(); }
-  function saveDrawer() {
+  async function saveDrawer() {
     if (!current) return;
     const u = current, msgs = [];
+    const res = await API.saveAccount(u.id, draft.status !== u.status ? draft.status : null, draft.role !== u.role ? draft.role : null);
+    if (!res.ok) { toast(res.error); return; }
     if (draft.status !== u.status) {
       u.status = draft.status;
       msgs.push(draft.status === "On hold" ? "put " + u.name + " on hold" : draft.status === "Disabled" ? "disabled " + u.name : "activated " + u.name);
@@ -429,8 +451,10 @@
       $("#cBody").textContent = "Their portfolio, " + current.projects + " projects and every attached document are removed, and their share link stops working. This cannot be undone.";
       $("#confirmDialog").classList.add("on"); $("#cConfirm").focus();
     });
-    $("#cConfirm").addEventListener("click", () => {
+    $("#cConfirm").addEventListener("click", async () => {
       const u = current; if (!u) return;
+      const res = await API.deleteAccount(u.id);
+      if (!res.ok) { closeDialogs(); toast(res.error); return; }
       u.deleted = true; closeDialogs(); closeDrawer(); logChange("deleted " + u.name + "'s account");
       if (sky) sky.refresh(); renderUsers(); renderAccounts(); renderKPIs(false); $("#skyTotal").textContent = fmt(alive().length);
       toast(u.name + "'s account was deleted.");
@@ -442,15 +466,17 @@
   function initAddUser() {
     $("#addUserBtn").addEventListener("click", () => { $("#addDialog").classList.add("on"); $("#scrim").classList.add("on"); setTimeout(() => $("#aName").focus(), 50); });
     $$("[data-close]").forEach((b) => b.addEventListener("click", () => { closeDialogs(); if (!$("#drawer").classList.contains("on")) $("#scrim").classList.remove("on"); }));
-    $("#aConfirm").addEventListener("click", () => {
+    $("#aConfirm").addEventListener("click", async () => {
       const name = $("#aName").value.trim(), email = $("#aEmail").value.trim(), role = $("#aRole").value;
       if (!name || !/^\S+@\S+\.\S+$/.test(email)) { toast("Add a name and a valid email to continue."); return; }
-      D.users.push({ id: "u" + D.users.length, name, email, college: 10, role, status: "Active", projects: 0, documents: 0, links: 0, visitors: 0, avgViewSec: 0, filesOpened: 0, signupDay: 0, lastActive: 0, editMin: 0, sessions: 1, wallpaper: 0, tableStyle: 0, textColour: 0, glassColour: 0 });
+      const res = await API.invite(name, email, role);
+      if (!res.ok) { toast(res.error); return; }
+      D.users.push({ id: res.data.id, name, email, college: OTHER, role, status: "Active", projects: 0, documents: 0, links: 0, visitors: 0, visitorsR: { 7: 0, 30: 0, 90: 0 }, filesR: { 7: 0, 30: 0, 90: 0 }, avgViewSec: 0, filesOpened: 0, signupDay: 0, lastActive: 0, statusDays: 0, editMin: 0, sessions: 0, wallpaper: 0, tableStyle: 0, textColour: 0, glassColour: 0 });
       closeDialogs(); $("#scrim").classList.remove("on");
       logChange("added " + name + " as " + (role === "Editor" ? "an Editor" : role === "Viewer" ? "a Viewer" : "a Super admin"));
       $("#aName").value = ""; $("#aEmail").value = "";
       state.query = name; $("#userSearch").value = name; setStatusFilter(""); renderAccounts();
-      toast(name + " was added. A sign in link is on its way to " + email + ".");
+      toast(name + " was added. They can sign in with Google using " + email + ".");
     });
   }
 
@@ -510,14 +536,27 @@
     const h = new Date().getHours();
     const greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
     $(".head__sub").insertAdjacentText("afterbegin", greet + ", " + first(ME) + ". ");
-    $("#footTime").textContent = "Updated " + new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) + " IST · sample data";
+    $("#meAvatar").textContent = ME.charAt(0).toUpperCase(); $("#meAvatar").setAttribute("aria-label", "Signed in as " + ME);
+    $("#footTime").textContent = "Updated " + new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) + " IST";
 
     SC.initSilk($("#silk"));
     initSky();
     seg($("#rangeSeg"), (b) => { state.range = b.dataset.range === "all" ? "all" : +b.dataset.range; renderRange(false); });
     $("#trendTabs").addEventListener("click", (e) => { const b = e.target.closest(".metric-tab"); if (!b) return; state.trendMetric = b.dataset.k; $$(".metric-tab").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); renderTrend(); });
     $("#collegeBars").addEventListener("click", (e) => { const b = e.target.closest(".hbar"); if (b) { pickCollege(+b.dataset.idx, true); toast("Showing " + D.COLLEGES[+b.dataset.idx].name + " in the sky."); } });
-    $("#exportBtn").addEventListener("click", () => toast("Preparing a PDF of " + rangeLabel() + ". It downloads when ready."));
+    $("#exportBtn").addEventListener("click", () => {
+      // CSV of the daily numbers behind this page, for the chosen range (newest last)
+      const d = D.daily, n = days(), cols = [["Signups", d.signups], ["Page views", d.pageViews], ["Visitors", d.visitorsDaily], ["Active editors", d.activeEditors], ["Projects added", d.projectsAdded], ["Documents uploaded", d.docsUploaded], ["Links attached", d.linksAttached], ["Files opened", d.filesOpened]];
+      const rows = [["Date"].concat(cols.map((c) => c[0]))];
+      for (let i = n - 1; i >= 0; i--) rows.push([dateAgo(i).toISOString().slice(0, 10)].concat(cols.map((c) => c[1][i])));
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" }));
+      a.download = "projectcv-report-" + (state.range === "all" ? "all-time" : state.range + "-days") + ".csv";
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      const what = "exported the " + (state.range === "all" ? "all time" : state.range + " day") + " report";
+      API.log(what); logChange(what);
+      toast("Your report for " + rangeLabel() + " downloaded.");
+    });
 
     renderRange(true);
     initRetention(); renderEngagement(); renderCustom(); renderAccounts(); renderAudit();
@@ -536,3 +575,6 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
+
+// Bundled as a module by AdminDashboard.tsx (no exports; it sets its window.PCV_* global as before).
+export {};

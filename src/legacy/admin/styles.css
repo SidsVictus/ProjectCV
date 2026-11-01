@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Boska";
-  src: url("assets/Boska-Regular.woff2") format("woff2");
+  src: url("/fonts/Boska-Regular.woff2") format("woff2");
   font-weight: 300 400;
   font-style: normal;
   font-display: swap;

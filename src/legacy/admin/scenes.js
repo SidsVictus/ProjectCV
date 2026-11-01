@@ -521,3 +521,6 @@
 
   window.PCV_SCENES = { initSilk, initConstellation, initTerrain, available: ok, shaders: { SILK_FRAG, STAR_VERT, STAR_FRAG } };
 })();
+
+// Bundled as a module by AdminDashboard.tsx (no exports; it sets its window.PCV_* global as before).
+export {};

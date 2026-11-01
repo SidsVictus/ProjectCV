@@ -261,3 +261,6 @@
 
   window.PCV_CHARTS = { S, esc, fmt, compact, sparkline, trend, stacked, heatmap, rings, donut, histogram, tipShow, tipHide, whenIn, warmColor };
 })();
+
+// Bundled as a module by AdminDashboard.tsx (no exports; it sets its window.PCV_* global as before).
+export {};

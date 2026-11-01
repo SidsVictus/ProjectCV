@@ -56,6 +56,15 @@ begin
         'visitors', (select count(distinct visitor_key) from public.page_visits x where x.owner_id = p.id),
         'avg_view_sec', (select coalesce(round(avg(extract(epoch from x.last_seen_at - x.started_at))), 0) from public.page_visits x where x.owner_id = p.id),
         'files_opened', (select count(*) from public.file_opens x where x.owner_id = p.id),
+        -- exact per-range counts for the leaderboard (7, 30, 90 days)
+        'visitors_r', jsonb_build_object(
+          '7', (select count(distinct visitor_key) from public.page_visits x where x.owner_id = p.id and x.started_at > now() - interval '7 days'),
+          '30', (select count(distinct visitor_key) from public.page_visits x where x.owner_id = p.id and x.started_at > now() - interval '30 days'),
+          '90', (select count(distinct visitor_key) from public.page_visits x where x.owner_id = p.id and x.started_at > now() - interval '90 days')),
+        'files_r', jsonb_build_object(
+          '7', (select count(*) from public.file_opens x where x.owner_id = p.id and x.opened_at > now() - interval '7 days'),
+          '30', (select count(*) from public.file_opens x where x.owner_id = p.id and x.opened_at > now() - interval '30 days'),
+          '90', (select count(*) from public.file_opens x where x.owner_id = p.id and x.opened_at > now() - interval '90 days')),
         'edit_min', (select coalesce(round(avg(extract(epoch from x.last_seen_at - x.started_at)) / 60, 1), 0) from public.edit_sessions x where x.user_id = p.id),
         'sessions', (select count(*) from public.edit_sessions x where x.user_id = p.id)
       ) order by p.created_at) from public.profiles p), '[]'::jsonb),
@@ -109,13 +118,19 @@ begin
             and extract(isodow from s.started_at at time zone ist) = wd + 1
             and extract(hour from s.started_at at time zone ist) = h) order by h)
         from generate_series(0, 23) h) order by wd) from generate_series(0, 6) wd),
-    'files', coalesce((select jsonb_agg(jsonb_build_object('name', t.name, 'opens', t.n) order by t.n desc)
-      from (select d.name, count(*) n from public.file_opens f join public.documents d on d.id = f.document_id
-            group by d.id, d.name order by count(*) desc limit 7) t), '[]'::jsonb),
+    -- most opened documents, with exact opens per range ('all', '7', '30', '90')
+    'files', coalesce((select jsonb_agg(jsonb_build_object('name', t.name, 'opens', jsonb_build_object(
+        'all', t.n, '7', t.n7, '30', t.n30, '90', t.n90)) order by t.n desc)
+      from (select d.name, count(*) n,
+              count(*) filter (where f.opened_at > now() - interval '7 days') n7,
+              count(*) filter (where f.opened_at > now() - interval '30 days') n30,
+              count(*) filter (where f.opened_at > now() - interval '90 days') n90
+            from public.file_opens f join public.documents d on d.id = f.document_id
+            group by d.id, d.name order by count(*) desc limit 50) t), '[]'::jsonb),
     'audit', coalesce((select jsonb_agg(jsonb_build_object('who', a.actor_name, 'text', a.text,
         'minutes', floor(extract(epoch from now() - a.at) / 60)) order by a.at desc)
       from (select * from public.audit_log order by at desc limit 20) a), '[]'::jsonb),
-    'feed', coalesce((select jsonb_agg(jsonb_build_object('kind', a.kind, 'user_id', a.user_id, 'detail', a.detail) order by a.at desc)
+    'feed', coalesce((select jsonb_agg(jsonb_build_object('kind', a.kind, 'user_id', a.user_id, 'detail', a.detail, 'at', a.at) order by a.at desc)
       from (select * from public.activity order by at desc limit 9) a), '[]'::jsonb)
   );
 end; $$;
