@@ -157,11 +157,11 @@ export function ColourPanel({ colours, onChange, onReset, onDone }: {
   const tip = paneAlpha(colours.ink, colours.glass) === null;
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="co-title">
-      <button type="button" aria-label="Close text colour" onClick={onDone} style={{ position: "fixed", inset: 0, zIndex: 21, border: 0, padding: 0, background: "rgba(2,1,5,.18)", cursor: "default", animation: "satin-fade var(--satin-flow) both" }} />
+      <button type="button" aria-label="Close Edit Colors" onClick={onDone} style={{ position: "fixed", inset: 0, zIndex: 21, border: 0, padding: 0, background: "transparent", cursor: "default" }} />
       <div className="palette">
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <div style={{ flex: 1, display: "grid", gap: 4 }}>
-            <h2 id="co-title" style={{ margin: 0, font: "italic 300 34px/38px var(--font-display)", color: "#bccf67" }}>Text colour</h2>
+            <h2 id="co-title" style={{ margin: 0, font: "italic 300 34px/38px var(--font-display)", color: "#bccf67" }}>Edit Colors</h2>
             <p style={{ margin: 0, fontSize: 13, color: "#8e9c4e" }}>Changes show on your page as you pick.</p>
           </div>
           <button type="button" className="pcv-btn pcv-btn--ghost pcv-btn--icon pcv-btn--sm" aria-label="Close" onClick={onDone}><PIcon d={ClosePath} /></button>

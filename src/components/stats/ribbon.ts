@@ -4,7 +4,6 @@ import * as THREE from "three";
 
 export type RibbonData = { days: [string, number][]; unitWord: string };
 
-const INK = 0x141414;
 const ripple = (x: number) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 
 const DOT_VERT = `
@@ -29,7 +28,8 @@ const DOT_FRAG = `
     }`;
 
 /** Draws the ribbon into host (which holds a canvas). Returns a dispose function. */
-export function mountRibbon(host: HTMLElement, DATA: RibbonData): () => void {
+export function mountRibbon(host: HTMLElement, DATA: RibbonData, inkHex = "#141414"): () => void {
+  const INK = new THREE.Color(inkHex).getHex(); // the owner's text colour
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const TODAY = DATA.days.length - 1;
   const canvas = host.querySelector("canvas")!;

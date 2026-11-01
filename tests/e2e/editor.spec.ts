@@ -73,7 +73,7 @@ test("projects, documents, styles, share, preview and the public page", async ({
   await page.getByRole("button", { name: "Apply" }).click();
 
   // colours, saved on Done
-  await page.getByRole("button", { name: "Choose text colour" }).click();
+  await page.getByRole("button", { name: "Edit Colors" }).click();
   await page.getByRole("radio", { name: "Midnight" }).click();
   await page.getByRole("button", { name: "Done" }).click();
   await expect.poll(async () => (await service().from("profiles").select("table_style,wallpaper,ink").eq("id", u.id).single()).data)

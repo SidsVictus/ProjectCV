@@ -6,3 +6,20 @@
    Same motion, ending at the centred position. */
 .palette { animation-name: palette-slide-in; }
 @keyframes palette-slide-in { from { opacity: 0; translate: 60px -50%; filter: blur(8px); } to { opacity: 1; translate: 0 -50%; filter: none; } }
+
+/* Owner request: the eye pill and the "Who saw" card use the owner's glass colour (fully opaque) as
+   background and their text colour for text, icons and bars. The glass pane on the wallpaper keeps
+   its transparency. --pc-bg and --pc-ink are set on .stats-wrap by PageStats. */
+.stats-wrap .eye-btn { background: var(--pc-bg); color: var(--pc-ink); border-color: color-mix(in srgb, var(--pc-ink) 18%, transparent); }
+.stats-wrap .eye-ball { background: var(--pc-ink); }
+.stats-wrap .eye-white { fill: var(--pc-bg); }
+.stats-wrap .eye-iris circle:first-child { fill: var(--pc-ink); }
+.stats-wrap .eye-text small { color: var(--pc-ink); opacity: .82; }
+.stats-wrap .eye-live { background: var(--pc-ink); }
+.stats-wrap .whosaw {
+  --glass: var(--pc-bg); --ink: var(--pc-ink);
+  --muted: color-mix(in srgb, var(--pc-ink) 72%, var(--pc-bg));
+  --track: color-mix(in srgb, var(--pc-ink) 12%, transparent);
+  --edge: color-mix(in srgb, var(--pc-ink) 16%, transparent);
+}
+.stats-wrap .whosaw .seg button[aria-pressed="true"] { color: var(--pc-bg); }

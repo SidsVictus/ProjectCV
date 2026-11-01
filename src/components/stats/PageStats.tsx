@@ -21,7 +21,8 @@ async function load(slug: string, range: Range): Promise<Stats | null> {
 }
 
 /** The eye pill in the tool row (prototype) that opens the "Who saw your page" card (owner's design). */
-export function PageStats({ slug, owner, initial }: { slug: string; owner: boolean; initial: Stats | null }) {
+/** colours: the owner's text and glass colours; the pill and card use them opaque. */
+export function PageStats({ slug, owner, initial, colours }: { slug: string; owner: boolean; initial: Stats | null; colours: { ink: string; glass: string } }) {
   const [open, setOpen] = useState(false);
   const [range, setRange] = useState<Range>("7d");
   const [stats, setStats] = useState<Stats | null>(initial);
@@ -62,7 +63,7 @@ export function PageStats({ slug, owner, initial }: { slug: string; owner: boole
   }, [open]);
 
   return (
-    <div className="stats-wrap">
+    <div className="stats-wrap" style={{ "--pc-ink": colours.ink, "--pc-bg": colours.glass } as React.CSSProperties}>
       <button type="button" className="eye-btn" aria-expanded={open} aria-label={`Page stats: ${week} visitors`} onClick={() => setOpen(!open)}>
         <span className="eye-ball"><svg className="eye-svg" viewBox="0 0 32 32" aria-hidden="true"><path className="eye-white" d="M3 16C7 9.5 11 7 16 7s9 2.5 13 9c-4 6.5-8 9-13 9S7 22.5 3 16z" /><g className="eye-iris"><circle cx="16" cy="16" r="5.4" /><circle cx="18" cy="14" r="1.5" fill="#ffffff" /></g></svg></span>
         <span className="eye-text"><b className="count" style={{ "--n": week } as React.CSSProperties} /><small>{PILL_LABEL["7d"]}</small></span>
@@ -72,7 +73,7 @@ export function PageStats({ slug, owner, initial }: { slug: string; owner: boole
         <>
           <button type="button" className="stats-scrim" aria-label="Close page stats" onClick={() => setOpen(false)} />
           <div className="whosaw whosaw-pop" role="dialog" aria-label="Page stats">
-            <WhoSawCard title={owner ? "Who saw your page" : "Who saw this page"} owner={owner} range={range} setRange={setRange} stats={stats} />
+            <WhoSawCard title={owner ? "Who saw your page" : "Who saw this page"} owner={owner} range={range} setRange={setRange} stats={stats} ink={colours.ink} />
           </div>
         </>
       )}
@@ -80,8 +81,8 @@ export function PageStats({ slug, owner, initial }: { slug: string; owner: boole
   );
 }
 
-function WhoSawCard({ title, owner, range, setRange, stats }: {
-  title: string; owner: boolean; range: Range; setRange: (r: Range) => void; stats: Stats | null;
+function WhoSawCard({ title, owner, range, setRange, stats, ink }: {
+  title: string; owner: boolean; range: Range; setRange: (r: Range) => void; stats: Stats | null; ink: string;
 }) {
   const stream = useRef<HTMLDivElement>(null);
   const days = stats?.buckets ?? [];
@@ -89,9 +90,9 @@ function WhoSawCard({ title, owner, range, setRange, stats }: {
 
   useEffect(() => {
     if (!stream.current || !days.length) return;
-    try { return mountRibbon(stream.current, { days, unitWord }); } catch { return; } // the card still reads without the 3D ribbon
+    try { return mountRibbon(stream.current, { days, unitWord }, ink); } catch { return; } // the card still reads without the 3D ribbon
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stats]);
+  }, [stats, ink]);
 
   const files = stats?.files ?? [];
   const max = files[0]?.[1] ?? 1;

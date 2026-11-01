@@ -95,7 +95,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
 
         <div className="cv-zone">
           <div className="tool-row">
-            <PageStats slug={slug} owner initial={stats} />
+            <PageStats slug={slug} owner initial={stats} colours={colours} />
             <div className="tool-set">
               <div className="tool-stack">
                 <button type="button" className={`tool-btn ${pulse ? "pulse-once" : ""}`} aria-label="Change wallpaper" onClick={() => { setTryBg(bg); setModal("background"); setMenuOpen(false); }} style={{ animationDelay: ".25s" }}>
@@ -108,10 +108,10 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
                 </svg>
               </div>
               <div className="tool-stack">
-                <button type="button" className="tool-btn" aria-label="Choose text colour" onClick={() => { setModal("colours"); setMenuOpen(false); }} style={{ animationDelay: ".4s" }}>
+                <button type="button" className="tool-btn" aria-label="Edit Colors" onClick={() => { setModal("colours"); setMenuOpen(false); }} style={{ animationDelay: ".4s" }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3.5c3.6 4.3 6 7.6 6 10.4a6 6 0 0 1-12 0c0-2.8 2.4-6.1 6-10.4z" /><path d="M9.2 14.6a2.9 2.9 0 0 0 2.4 2.6" /></svg>
                 </button>
-                <span className="tool-label">text colour</span>
+                <span className="tool-label">Edit Colors</span>
               </div>
               <div className="tool-stack">
                 <button type="button" className="tool-btn" aria-label="Choose a table style" onClick={() => { setModal("tables"); setMenuOpen(false); }} style={{ animationDelay: ".55s" }}>

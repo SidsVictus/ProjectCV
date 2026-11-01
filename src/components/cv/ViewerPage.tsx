@@ -42,7 +42,7 @@ export function ViewerPage({ slug, profile, projects, style, stats, previewing =
           </div>
         )}
         <div className="tool-row" style={{ margin: "36px 0 0" }}>
-          <PageStats slug={slug} owner={owner} initial={stats} />
+          <PageStats slug={slug} owner={owner} initial={stats} colours={style} />
         </div>
         <section className="cv-pane" style={cvVars(style) as React.CSSProperties} aria-label="Portfolio">
           <CvHeader profile={profile} count={projects.length} />
