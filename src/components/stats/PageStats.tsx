@@ -67,7 +67,6 @@ export function PageStats({ slug, owner, initial, colours }: { slug: string; own
       <button type="button" className="eye-btn" aria-expanded={open} aria-label={`Page stats: ${week} visitors`} onClick={() => setOpen(!open)}>
         <span className="eye-ball"><svg className="eye-svg" viewBox="0 0 32 32" aria-hidden="true"><path className="eye-white" d="M3 16C7 9.5 11 7 16 7s9 2.5 13 9c-4 6.5-8 9-13 9S7 22.5 3 16z" /><g className="eye-iris"><circle cx="16" cy="16" r="5.4" /><circle cx="18" cy="14" r="1.5" fill="#ffffff" /></g></svg></span>
         <span className="eye-text"><b className="count" style={{ "--n": week } as React.CSSProperties} /><small>{PILL_LABEL["7d"]}</small></span>
-        <span className="eye-live" aria-hidden="true" />
       </button>
       {open && (
         <>
