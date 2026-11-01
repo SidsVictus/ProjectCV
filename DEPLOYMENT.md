@@ -18,7 +18,7 @@ Nothing has been deployed. This is the checklist for doing it.
    Someone who already signed in can be promoted by another super admin in the dashboard, or once with
    `update public.profiles set role = 'super_admin' where email = '...';`
 3. Authentication > Providers: enable **Google** (client ID and secret from step 3), **turn off Email**.
-4. Authentication > URL Configuration: Site URL = your site (for example `https://projectcv-q9ht.netlify.app`);
+4. Authentication > URL Configuration: Site URL = your site (for example `https://projectcv-io.netlify.app`);
    Redirect URLs: `https://<your-site>/auth/callback`.
 5. Database > Replication: confirm `activity` is in the `supabase_realtime` publication (the migration adds it).
 6. Run Advisors (Security and Performance) once after the push.
@@ -36,7 +36,7 @@ Google Cloud Console > APIs & Services > Credentials > OAuth client (Web). Autho
    ```
 
 ## 4. Netlify
-A site was created on your Free team: **projectcv-q9ht** (`projectcv` was taken). Rename it or add a domain any time.
+A site was created on your Free team: **projectcv-io**. Rename it or add a domain any time.
 1. Connect the GitHub repository `SidsVictus/ProjectCV` (Site configuration > Build & deploy). `netlify.toml`
    sets the build (`npm run build`, publish `.next`, Node 22) and the official Next.js runtime.
 2. **Visitor access:** the site currently requires Netlify team login for all deploys. Turn that off for

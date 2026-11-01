@@ -34,7 +34,7 @@ Google sign in, live R2, the hosted Supabase project, Netlify runtime behaviour,
 
 ## What you need to do
 1. Follow DEPLOYMENT.md: push migrations, seed super admin emails, Google provider on and Email off,
-   R2 bucket and token, Netlify env vars, turn off Netlify visitor login on `projectcv-q9ht`.
+   R2 bucket and token, Netlify env vars, turn off Netlify visitor login on `projectcv-io`.
 2. Have the Terms and Privacy pages reviewed.
 3. On the first deploy preview: sign in, upload a file, open the public link in a private window, open `/admin`.
 
