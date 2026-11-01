@@ -45,8 +45,9 @@ describe("validation", () => {
     expect(profileSchema.safeParse({ ...blank, headline: "x" }).success).toBe(false);
     expect(profileSchema.safeParse({ ...blank, full_name: " A ", headline: "x" }).data?.full_name).toBe("A");
   });
-  it("rejects a non four-digit year and over-long about lines", () => {
-    expect(profileSchema.safeParse({ ...blank, full_name: "a", headline: "b", grad_year: "28" }).success).toBe(false);
+  it("accepts a short year like '28, rejects over-long years and about lines", () => {
+    expect(profileSchema.safeParse({ ...blank, full_name: "a", headline: "b", grad_year: "'28" }).success).toBe(true);
+    expect(profileSchema.safeParse({ ...blank, full_name: "a", headline: "b", grad_year: "x".repeat(11) }).success).toBe(false);
     expect(profileSchema.safeParse({ ...blank, full_name: "a", headline: "b", about: "x".repeat(161) }).success).toBe(false);
   });
   it("links: adds https, refuses other schemes and hostless text", () => {

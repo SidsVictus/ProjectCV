@@ -9,7 +9,7 @@ export const profileSchema = z.object({
   full_name: text(80).min(1, "Add your name and a headline to continue."),
   headline: text(120).min(1, "Add your name and a headline to continue."),
   org: text(120),
-  grad_year: z.string().trim().regex(/^(\d{4})?$/, "Use a four digit year, like 2028."),
+  grad_year: text(10),
   location: text(80),
   about: text(160),
   linkedin: text(200),

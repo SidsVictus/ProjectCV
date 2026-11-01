@@ -45,7 +45,7 @@ export function SetupForm({ initial, editing, wallpaper, colours }: { initial: P
           {field("full_name", <>Full name <em>required</em></>, "Your name as you want it shown", true, { maxLength: 80, autoComplete: "name" })}
           {field("headline", <>Headline <em>required</em></>, "e.g. B.Tech Data Science student", true, { maxLength: 120 })}
           {field("org", "College or organisation", "e.g. MVSR Engineering College", false, { maxLength: 120 })}
-          {field("grad_year", "Graduation year", "e.g. 2028", false, { inputMode: "numeric", maxLength: 4, pattern: "[0-9]{4}" })}
+          {field("grad_year", "Graduation year", "e.g. 2028", false, { maxLength: 10 })}
           {field("location", "Location", "e.g. Hyderabad, India", true, { maxLength: 80 })}
           <label className="setup-field" style={{ gridColumn: "1 / -1" }}>
             <span>A line about you <em>{pd.about.length} / 160</em></span>
