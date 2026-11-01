@@ -1,0 +1,8 @@
+/* Deliberate deviations from the supplied CSS, each fixing a functional bug. Keep this list short. */
+
+/* The text colour panel is centred with `translate: 0 -50%`, but its entrance animation
+   (satin-slide-in, fill-mode both) ends at `translate: 0 0`, leaving the panel half off screen
+   on a 900px-tall window with "Done" unreachable (visible in reference/08-text-colour.png).
+   Same motion, ending at the centred position. */
+.palette { animation-name: palette-slide-in; }
+@keyframes palette-slide-in { from { opacity: 0; translate: 60px -50%; filter: blur(8px); } to { opacity: 1; translate: 0 -50%; filter: none; } }

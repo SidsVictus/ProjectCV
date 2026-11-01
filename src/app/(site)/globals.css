@@ -1,0 +1,12 @@
+/* Tailwind without its preflight reset, so the design system's own base styles stay exact. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-night: #020105;
+  --color-lime: #bccf67;
+  --color-olive-700: #8e9c4e;
+  --font-display: "Boska", "Iowan Old Style", Georgia, serif;
+}
+
+html, body { margin: 0; background: #020105; }

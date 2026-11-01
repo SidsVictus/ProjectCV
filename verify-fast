@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Fast subset while iterating: types, lint, unit and DB tests.
+set -u
+cd "$(dirname "$0")"
+npx --no-install tsc --noEmit && npx --no-install eslint . && npx --no-install vitest run && echo "verify-fast: green"
