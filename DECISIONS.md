@@ -1,0 +1,15 @@
+# Decisions
+
+| # | Decision | Why |
+|---|---|---|
+| D1 | The Super Admin dashboard keeps its original `index.html` markup, `styles.css`, `charts.js`, `scenes.js` and `app.js`, vendored in `src/legacy/admin/` and run on the `three` npm package. Only the data source, live feed, mutations and export are wired to the backend. | Owner instruction: "as it is, no changes". Rewriting 100 KB of tuned UI into React components would change it. |
+| D2 | One admin RPC, `admin_snapshot()`, returns the exact `PCV_DATA` shape the dashboard already consumes (users with per-user aggregates, 365-day daily series, cohorts, heatmap, files, audit). | Simplest contract that keeps `app.js` unchanged; range math stays client side. About 100 bytes per user. |
+| D3 | The "Who saw your page" card is ported to a React component with its CSS and three.js ribbon unchanged; it opens from the prototype's eye pill. The 30 days and All time buttons are enabled with real data (the design marked them "Not in this preview"). | DESIGN.md section 13 requires the three ranges. |
+| D4 | Editor, viewer, auth and picker screens are React components built from `prototype/Main.dc.html`, with its CSS copied as is. | The prototype is a template DSL that has to be translated anyway. |
+| D5 | Anonymous access goes through security-definer functions (`get_public_portfolio`, `portfolio_stats`, `record_visit`, `touch_visit`, `open_document`) instead of anon RLS policies on tables. | Returns only public columns (never email); a table policy would expose whole rows. |
+| D6 | Documents are opened through `/d/<id>`, which checks the owner is not disabled, records the open and redirects (presigned 5 min GET for files, the URL for links). | One place for authorization and "files opened" tracking. |
+| D7 | Uploads go browser to R2 with a presigned PUT (5 min); the server then HEADs the object to confirm size and type before the document becomes visible. | Files never pass through the server; the server still validates. |
+| D8 | Delete account runs in one database transaction (`admin_delete_account`) that also writes the audit row; R2 objects are deleted after commit. | Audit and delete are atomic. An R2 failure leaves orphans, which are logged. |
+| D9 | "Needs a look": the "reported by viewers" row is removed (no reporting feature in the MVP); the on-hold wait time is computed; "Sort" filters the users table to "Other" organisations. Export downloads a CSV. Toast copy for Add user no longer promises an email. | No fake numbers or fake actions. |
+| D10 | Local development and tests use the Supabase CLI stack (Docker) and an S3-compatible mock (`s3rver`) for R2. E2E tests sign in with a password created through the admin API, then hand the session cookies to the browser. The app itself only offers Google. | Google OAuth cannot run headless without real credentials. |
+| D11 | The first super admins come from `admin_allowlist`; everyone else starts as an Editor. | No trusted client-side role, no hardcoded emails. |
