@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# ProjectCV check command. Exit 0 = every gate passed. Run: bash ./verify
+# Needs the local Supabase stack running (npm run db:start) and .env.local (see .env.example).
+set -u
+cd "$(dirname "$0")"
+failed=""
+step() { local name="$1"; shift; echo "verify: $name"; "$@"; local rc=$?; [ $rc -ne 0 ] && { echo "verify: FAILED ($rc): $name"; failed="$failed $name;"; }; }
+step "types"       npx --no-install tsc --noEmit
+step "lint"        npx --no-install eslint .
+step "unit + db"   npx --no-install vitest run
+step "build"       npx --no-install next build
+step "e2e"         npx --no-install playwright test
+if [ -n "$failed" ]; then echo "verify: RED:$failed"; exit 1; fi
+echo "verify: green"

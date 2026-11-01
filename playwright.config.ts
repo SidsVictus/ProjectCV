@@ -6,6 +6,7 @@ config({ path: ".env.local" });
 // E2E against the real local Supabase stack and the R2 mock. Run `npm run build` first.
 export default defineConfig({
   testDir: "tests/e2e",
+  testIgnore: "**/_scratch/**",
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
