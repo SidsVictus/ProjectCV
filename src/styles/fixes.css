@@ -23,3 +23,7 @@
   --edge: color-mix(in srgb, var(--pc-ink) 16%, transparent);
 }
 .stats-wrap .whosaw .seg button[aria-pressed="true"] { color: var(--pc-bg); }
+
+/* Owner request: table headings and project names swap font styles (all eight table styles). */
+.tbl:not(.tbl-mini) th { font: italic 400 24px/29px var(--font-display); letter-spacing: 0; text-transform: none; }
+.tbl:not(.tbl-mini) td.c-name { font: 700 13px/18px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; }
