@@ -1,7 +1,8 @@
 // Turns admin_snapshot() into the window.PCV_DATA shape the Super Admin dashboard reads.
-// Every number comes from the database; the catalogues are the product's real wallpapers,
-// table styles and colour swatches (src/lib/cv.ts).
-import { PALETTES, TABLES, WALLPAPERS, hexRgb } from "@/lib/cv";
+// Every number comes from the database, and so do the wallpapers, table styles and colour
+// swatches (public.catalog, managed from section 05).
+import type { Catalog } from "@/lib/catalog";
+import { TABLES, hexRgb } from "@/lib/cv";
 import { WALLPAPER_CSS } from "./wallpaperCss";
 
 type Range3 = { "7": number; "30": number; "90": number };
@@ -63,12 +64,17 @@ function seeded(seed: number) {
 
 const rgbaHalf = (hex: string) => { const c = hexRgb(hex); return `rgba(${c[0]},${c[1]},${c[2]},0.5)`; };
 
-export function toPcvData(s: Snapshot) {
+export function toPcvData(s: Snapshot, cat: Catalog) {
   const { colleges, indexOf } = groupColleges(s.users);
-  const WALL = WALLPAPERS.map((w) => ({ id: w.id, name: w.name, css: WALLPAPER_CSS[w.id] }));
-  const TABLE_STYLES = TABLES.map((t) => ({ id: t.id, name: t.name }));
-  const TEXT_COLOURS: { name: string; hex: string }[] = [...PALETTES.ink.map(([name, hex]) => ({ name, hex })), { name: "Custom", hex: "#8e9c4e" }];
-  const GLASS_COLOURS: { name: string; hex: string; solid: string }[] = [...PALETTES.glass.map(([name, hex]) => ({ name, hex: rgbaHalf(hex), solid: hex })), { name: "Custom", hex: rgbaHalf("#8e9c4e"), solid: "#8e9c4e" }];
+  const WALL = cat.wallpapers.map((w) => ({
+    id: w.id, name: w.name, hidden: w.hidden, custom: w.custom,
+    css: w.custom ? `url("/w/${w.id}") center / cover no-repeat #8a8170` : WALLPAPER_CSS[w.id] ?? "#8a8170",
+  }));
+  const TABLE_STYLES = cat.tables.map((t) => ({ id: t.id, name: t.name, hidden: t.hidden, base: t.base, colours: t.colours }));
+  const TEXT_COLOURS: { name: string; hex: string; hidden?: boolean }[] = [...cat.ink.map(({ name, hex, hidden }) => ({ name, hex, hidden })), { name: "Custom", hex: "#8e9c4e" }];
+  const GLASS_COLOURS: { name: string; hex: string; solid: string; hidden?: boolean }[] = [...cat.glass.map(({ name, hex, hidden }) => ({ name, hex: rgbaHalf(hex), solid: hex, hidden })), { name: "Custom", hex: rgbaHalf("#8e9c4e"), solid: "#8e9c4e" }];
+  const LINE_COLOURS = cat.line.map(({ name, hex, hidden }) => ({ name, hex, hidden }));
+  const TABLE_BASES = TABLES.map((t) => ({ id: t.id, name: t.name }));
   const idx = <T,>(list: readonly T[], pred: (x: T) => boolean) => { const i = list.findIndex(pred); return i < 0 ? list.length - 1 : i; };
   const lower = (h: string) => h.toLowerCase();
 
@@ -85,7 +91,7 @@ export function toPcvData(s: Snapshot) {
 
   const d = s.daily;
   return {
-    DAYS: 365, COLLEGES: colleges, WALLPAPERS: WALL, TABLE_STYLES, TEXT_COLOURS, GLASS_COLOURS,
+    DAYS: 365, COLLEGES: colleges, WALLPAPERS: WALL, TABLE_STYLES, TEXT_COLOURS, GLASS_COLOURS, LINE_COLOURS, TABLE_BASES,
     FILES: s.files,
     AUDIT: s.audit.map((a) => ({ who: a.who, text: a.text, when: a.minutes })),
     users,

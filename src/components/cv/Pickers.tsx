@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PALETTES, TABLES, WALLPAPERS, cvVars, paneAlpha, type Colours } from "@/lib/cv";
+import { cvVars, paneAlpha, type Colours } from "@/lib/cv";
+import { offered, tableLook, wallpaperLook, type Catalog } from "@/lib/catalog";
 import { CheckPath, ClosePath, FileIcon, PIcon } from "./icons";
 import type { ProjectView } from "./ProjectsTable";
 
-const SPOOL = 112, RUN = 140;
+// Distance between neighbours: spool rows are 96px tall with 8px margins that collapse (104);
+// runway swatches are 120px wide with 10px side margins that do not (140).
+const SPOOL = 104, RUN = 140;
 
 // Shown only while the page has no projects, so the style still has rows to show.
 const PLACEHOLDER_ROWS = [
@@ -14,10 +17,12 @@ const PLACEHOLDER_ROWS = [
 ] as const;
 
 /** "The spool": table styles on a 3D drum, live preview of the owner's own projects on the right. */
-export function TablePicker({ current, wallpaper, colours, projects, onApply, onClose }: {
-  current: string; wallpaper: string; colours: Colours; projects: ProjectView[];
+export function TablePicker({ current, wallpaper, colours, projects, catalog, onApply, onClose }: {
+  current: string; wallpaper: string; colours: Colours; projects: ProjectView[]; catalog: Catalog;
   onApply: (id: string) => void; onClose: () => void;
 }) {
+  const TABLES = offered(catalog.tables, (t) => t.id === current);
+  const wall = (extra: string) => wallpaperLook(wallpaper, catalog, extra);
   const start = Math.max(0, TABLES.findIndex((t) => t.id === current));
   const [pos, setPos] = useState(start);
   const wheel = useRef<HTMLDivElement>(null);
@@ -54,10 +59,10 @@ export function TablePicker({ current, wallpaper, colours, projects, onApply, on
                   <button key={t.id} type="button" id={`ts-${t.id}`} role="option" aria-selected={on} className={`spool-item ${on ? "is-on" : ""}`}
                     onClick={(e) => { if (on) onApply(t.id); else e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" }); }}
                     style={{ willChange: "transform, opacity, filter", transform: `rotateX(${(-dd * 16).toFixed(2)}deg) scale(${(1 - a * 0.07).toFixed(3)})`, opacity: on ? 1 : Math.max(0.12, 0.9 - a * 0.28), filter: `blur(${(Math.min(Math.abs(dd), 2) * 1.2).toFixed(2)}px)`, animationDelay: `${i * 55}ms` }}>
-                    <span className={`spool-mini wp wp-box wp-${wallpaper}`}>
+                    <span {...wall("spool-mini wp-box")}>
                       <span className="spool-mini-pane">
-                        <table className={`tbl tbl-mini tbl-${t.id}`}>
-                          <thead><tr><th className="c-num"></th><th className="c-name"><i className="bar" style={{ width: 30 }} /></th><th><i className="bar" style={{ width: 20 }} /></th><th><i className="bar" style={{ width: 16 }} /></th></tr></thead>
+                        <table className={`tbl tbl-mini tbl-${tableLook(t.id, catalog).base}`} style={tableLook(t.id, catalog).style}>
+                          <thead style={tableLook(t.id, catalog).headStyle}><tr><th className="c-num"></th><th className="c-name"><i className="bar" style={{ width: 30 }} /></th><th><i className="bar" style={{ width: 20 }} /></th><th><i className="bar" style={{ width: 16 }} /></th></tr></thead>
                           <tbody>
                             <tr><td className="c-num">1</td><td className="c-name"><i className="bar" style={{ width: 36 }} /></td><td><i className="bar" style={{ width: 18 }} /></td><td><i className="pill" /></td></tr>
                             <tr><td className="c-num">2</td><td className="c-name"><i className="bar" style={{ width: 26 }} /></td><td><i className="bar" style={{ width: 22 }} /></td><td><i className="pill o" /></td></tr>
@@ -73,11 +78,11 @@ export function TablePicker({ current, wallpaper, colours, projects, onApply, on
           </div>
           <div style={{ flex: "1.6 1 520px", minWidth: 0, display: "grid", gap: 12 }}>
             <p style={{ margin: 0, fontSize: 12, lineHeight: "16px", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "#727d40" }}>Live on your page · <span style={{ color: "#bccf67" }}>{focus.name}</span></p>
-            <div className={`wp wp-box wp-${wallpaper}`} style={{ borderRadius: 28, padding: 28, boxShadow: "var(--satin-fold)" }}>
+            <div className={wall("wp-box").className} style={{ ...wall("wp-box").style, borderRadius: 28, padding: 28, boxShadow: "var(--satin-fold)" }}>
               <div className="cv-pane" style={{ ...vars, padding: 22 }}>
                 <div className="tbl-scroll">
-                  <table className={`tbl tbl-${focus.id}`}>
-                    <thead><tr><th className="c-num">No.</th><th className="c-name">Project</th><th className="c-when">Timeline</th><th>Documents</th><th>Status</th></tr></thead>
+                  <table className={`tbl tbl-${tableLook(focus.id, catalog).base}`} style={tableLook(focus.id, catalog).style}>
+                    <thead style={tableLook(focus.id, catalog).headStyle}><tr><th className="c-num">No.</th><th className="c-name">Project</th><th className="c-when">Timeline</th><th>Documents</th><th>Status</th></tr></thead>
                     <tbody>
                       {rows.map((p, i) => (
                         <tr key={i}>
@@ -105,9 +110,10 @@ export function TablePicker({ current, wallpaper, colours, projects, onApply, on
 }
 
 /** "The lit runway": swatches fan in 3D; the page behind tries each one on live. */
-export function WallpaperPicker({ current, onTry, onApply, onCancel }: {
-  current: string; onTry: (id: string) => void; onApply: (id: string) => void; onCancel: () => void;
+export function WallpaperPicker({ current, catalog, onTry, onApply, onCancel }: {
+  current: string; catalog: Catalog; onTry: (id: string) => void; onApply: (id: string) => void; onCancel: () => void;
 }) {
+  const WALLPAPERS = offered(catalog.wallpapers, (w) => w.id === current);
   const start = Math.max(0, WALLPAPERS.findIndex((w) => w.id === current));
   const [pos, setPos] = useState(start);
   const wheel = useRef<HTMLDivElement>(null);
@@ -133,11 +139,12 @@ export function WallpaperPicker({ current, onTry, onApply, onCancel }: {
           }}>
           {WALLPAPERS.map((b, i) => {
             const dd = i - pos, a = Math.min(Math.abs(dd), 4), on = i === focusIdx, rot = Math.max(-55, Math.min(55, -dd * 32));
+            const look = wallpaperLook(b.id, catalog, `swatch wp-box ${on ? "is-on" : ""}`);
             return (
               <button key={b.id} type="button" id={`wp-${b.id}`} role="option" aria-selected={on} aria-label={b.name}
-                className={`swatch wp wp-box wp-${b.id} ${on ? "is-on" : ""}`}
+                className={look.className}
                 onClick={(e) => { if (on) onApply(b.id); else e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}
-                style={{ willChange: "transform, opacity", transform: `translateY(${(on ? -22 : a * 6).toFixed(1)}px) rotateY(${rot.toFixed(2)}deg) scale(${(on ? 1.18 : 1 - a * 0.08).toFixed(3)})`, opacity: on ? 1 : Math.max(0.18, 1 - a * 0.22), animationDelay: `${Math.min(i, 10) * 40}ms` }} />
+                style={{ ...look.style, willChange: "transform, opacity", transform: `translateY(${(on ? -22 : a * 6).toFixed(1)}px) rotateY(${rot.toFixed(2)}deg) scale(${(on ? 1.18 : 1 - a * 0.08).toFixed(3)})`, opacity: on ? 1 : Math.max(0.18, 1 - a * 0.22), animationDelay: `${Math.min(i, 10) * 40}ms` }} />
             );
           })}
         </div>
@@ -151,8 +158,8 @@ const ROWS: { key: keyof Colours; label: string; delay: number }[] = [
 ];
 
 /** "The droplet palette": text, glass and line colours, applied live. */
-export function ColourPanel({ colours, onChange, onReset, onDone }: {
-  colours: Colours; onChange: (c: Colours) => void; onReset: () => void; onDone: () => void;
+export function ColourPanel({ colours, catalog, onChange, onReset, onDone }: {
+  colours: Colours; catalog: Catalog; onChange: (c: Colours) => void; onReset: () => void; onDone: () => void;
 }) {
   const tip = paneAlpha(colours.ink, colours.glass) === null;
   return (
@@ -167,8 +174,8 @@ export function ColourPanel({ colours, onChange, onReset, onDone }: {
           <button type="button" className="pcv-btn pcv-btn--ghost pcv-btn--icon pcv-btn--sm" aria-label="Close" onClick={onDone}><PIcon d={ClosePath} /></button>
         </div>
         {ROWS.map((row) => {
-          const pal = PALETTES[row.key];
           const value = colours[row.key].toLowerCase();
+          const pal = offered(catalog[row.key], (s) => s.hex === value).map((s) => [s.name, s.hex] as const);
           return (
             <div key={row.key} className="palette-row">
               <div className="palette-title"><b>{row.label}</b><span>{(pal.find((x) => x[1] === value) ?? ["Custom"])[0]}</span></div>

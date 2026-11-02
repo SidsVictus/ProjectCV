@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { ViewerPage } from "@/components/cv/ViewerPage";
+import { getCatalog } from "@/lib/catalog-server";
 import { pageStats, profileFields, publicPortfolio } from "@/lib/portfolio";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -25,6 +26,6 @@ export default async function PublicPage({ params }: Props) {
     );
   }
   const p = pf.profile;
-  return <ViewerPage slug={slug} profile={profileFields(p)} projects={pf.projects} stats={await pageStats(slug)} isOwner={pf.is_owner}
+  return <ViewerPage slug={slug} profile={profileFields(p)} projects={pf.projects} stats={await pageStats(slug)} catalog={await getCatalog()} isOwner={pf.is_owner}
     style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line }} />;
 }

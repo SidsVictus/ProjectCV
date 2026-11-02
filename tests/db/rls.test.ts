@@ -289,3 +289,54 @@ describe("super admin", () => {
     expect((await s.client.rpc("admin_delete_account", { p_user: s.id })).error).not.toBeNull();
   });
 });
+
+describe("catalogue", () => {
+  it("is readable by everyone, writable by nobody directly", async () => {
+    const { data } = await anon().from("catalog").select("kind,id").eq("kind", "wallpaper");
+    expect(data!.length).toBeGreaterThanOrEqual(15);
+    const w = await a.client.from("catalog").insert({ kind: "ink", id: "#010203", name: "Mine", hex: "#010203" });
+    expect(w.error).not.toBeNull();
+    const r = await a.client.rpc("admin_catalog_add_colour", { p_kind: "ink", p_name: "Mine", p_hex: "#010203" });
+    expect(r.error?.message).toContain("super admin only");
+  });
+
+  it("super admins add tables and colours, hide and show them, each audited", async () => {
+    const s = await makeUser({ superAdmin: true, name: "Cat Admin" });
+    const t = await s.client.rpc("admin_catalog_add_table", { p_name: "Gold ledger", p_base: "ledger", p_header: "#B8873A", p_rule: "#6d4c1c", p_band: "#e9cf98" });
+    expect(t.error).toBeNull();
+    const id = t.data as string;
+    const { data: row } = await anon().from("catalog").select("base,header,hidden").eq("kind", "table").eq("id", id).single();
+    expect(row).toEqual({ base: "ledger", header: "#b8873a", hidden: false });
+    expect((await s.client.rpc("admin_catalog_add_table", { p_name: "Bad", p_base: "nope", p_header: "#000000", p_rule: "#000000", p_band: "#000000" })).error).not.toBeNull();
+
+    // owners can switch to it; once hidden, nobody new can, but its users keep it
+    expect((await a.client.from("profiles").update({ table_style: id }).eq("id", a.id)).error).toBeNull();
+    expect((await s.client.rpc("admin_catalog_set_hidden", { p_kind: "table", p_id: id, p_hidden: true })).error).toBeNull();
+    expect((await b.client.from("profiles").update({ table_style: id }).eq("id", b.id)).error?.message).toContain("unknown table style");
+    expect((await a.client.from("profiles").update({ headline: "Still here" }).eq("id", a.id)).error).toBeNull();
+    expect((await a.client.from("profiles").update({ wallpaper: "not-a-wallpaper" }).eq("id", a.id)).error?.message).toContain("unknown wallpaper");
+    await s.client.rpc("admin_catalog_set_hidden", { p_kind: "table", p_id: id, p_hidden: false });
+    await a.client.from("profiles").update({ table_style: "ledger" }).eq("id", a.id);
+
+    expect((await s.client.rpc("admin_catalog_add_colour", { p_kind: "glass", p_name: "Honey", p_hex: "#F0C060" })).error).toBeNull();
+    const { data: c } = await anon().from("catalog").select("id,name").eq("kind", "glass").eq("id", "#f0c060").single();
+    expect(c).toEqual({ id: "#f0c060", name: "Honey" });
+    const log = await service().from("audit_log").select("text").eq("actor_id", s.id);
+    expect(log.data!.map((l) => l.text)).toEqual(expect.arrayContaining(
+      ["added the table style Gold ledger", "hid the table style Gold ledger", "showed the table style Gold ledger", "added the glass colour Honey"]));
+  });
+
+  it("wallpaper uploads stay invisible until ready at the reserved size", async () => {
+    const s = await makeUser({ superAdmin: true });
+    const r = await s.client.rpc("admin_catalog_start_wallpaper", { p_name: "Sunset", p_mime: "image/png", p_size: 1000 });
+    expect(r.error).toBeNull();
+    const { id, object_key } = r.data as { id: string; object_key: string };
+    expect(object_key).toBe(`wallpapers/${id}.png`);
+    expect((await anon().from("catalog").select("id").eq("id", id)).data).toHaveLength(0);
+    expect((await s.client.rpc("admin_catalog_start_wallpaper", { p_name: "Huge", p_mime: "image/png", p_size: 9_000_000 })).error).not.toBeNull();
+    expect((await s.client.rpc("admin_catalog_start_wallpaper", { p_name: "Gif", p_mime: "image/gif", p_size: 10 })).error).not.toBeNull();
+    expect((await s.client.rpc("admin_catalog_ready", { p_id: id, p_size: 999 })).error).not.toBeNull();
+    expect((await s.client.rpc("admin_catalog_ready", { p_id: id, p_size: 1000 })).error).toBeNull();
+    expect((await anon().from("catalog").select("name").eq("id", id).single()).data).toEqual({ name: "Sunset" });
+  });
+});

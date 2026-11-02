@@ -11,34 +11,9 @@ export const TABLES = [
   { id: "blueprint", name: "Blueprint", desc: "Dashed rules on a dotted drafting grid." },
 ] as const;
 
-export const WALLPAPERS = [
-  { id: "oak", name: "Oak grain", light: true },
-  { id: "deco", name: "Art deco", light: false },
-  { id: "rosefloral", name: "Rose gold vines", light: true },
-  { id: "silk", name: "Champagne silk", light: true },
-  { id: "terra", name: "Terracotta sun", light: true },
-  { id: "linen", name: "Sage linen", light: true },
-  { id: "mesh", name: "Rose quartz", light: true },
-  { id: "ripple", name: "Lilac ripple", light: true },
-  { id: "terrazzo", name: "Terrazzo", light: true },
-  { id: "bauhaus", name: "Bauhaus", light: true },
-  { id: "dunes", name: "Dusk dunes", light: false },
-  { id: "midnight", name: "Midnight silk", light: false },
-  { id: "forest", name: "Deep forest", light: false },
-  { id: "contours", name: "Ink contours", light: false },
-  { id: "charcoal", name: "Graphite", light: false },
-] as const;
-
-export const PALETTES = {
-  ink: [["Ink black", "#141414"], ["Charcoal", "#3a3a3a"], ["Pure white", "#ffffff"], ["Ivory", "#f4ecdc"], ["Midnight", "#1d2a44"], ["Forest", "#1f3a2b"], ["Burgundy", "#4a1f27"], ["Cocoa", "#4a3426"]],
-  glass: [["Clear white", "#ffffff"], ["Smoke", "#1a1a1a"], ["Sand", "#e9dcc4"], ["Rose", "#f1d4d4"], ["Sage", "#d3e2cf"], ["Sky", "#d3e1f0"], ["Lilac", "#e1d8f0"], ["Night", "#0b0b14"]],
-  line: [["Soft grey", "#8a8a8a"], ["Pale grey", "#d2d2d2"], ["Graphite", "#3a3a3a"], ["White", "#ffffff"], ["Brass", "#b8955a"], ["Sage", "#7d9278"], ["Dusty rose", "#b98a8a"], ["Slate blue", "#4f6083"]],
-} as const satisfies Record<string, readonly (readonly [string, string])[]>;
-
 export const DEFAULT_COLOURS = { ink: "#141414", glass: "#ffffff", line: "#8a8a8a" };
 
 export type TableId = (typeof TABLES)[number]["id"];
-export type WallpaperId = (typeof WALLPAPERS)[number]["id"];
 export type Colours = { ink: string; glass: string; line: string };
 
 const READ = { targets: [7, 4.5], tiers: [1, 0.96, 0.93], minPane: 0.5, maxPane: 0.9 };

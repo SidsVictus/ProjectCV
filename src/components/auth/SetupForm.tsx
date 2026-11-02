@@ -6,10 +6,12 @@ import { useState } from "react";
 import { saveProfile } from "@/app/actions/portfolio";
 import { CvHeader } from "@/components/cv/CvHeader";
 import { cvVars, type Colours, type ProfileFields } from "@/lib/cv";
+import { wallpaperLook, type Catalog } from "@/lib/catalog";
 
 type Key = keyof ProfileFields;
 
-export function SetupForm({ initial, editing, wallpaper, colours }: { initial: ProfileFields; editing: boolean; wallpaper: string; colours: Colours }) {
+export function SetupForm({ initial, editing, wallpaper, catalog, colours }: { initial: ProfileFields; editing: boolean; wallpaper: string; catalog: Catalog; colours: Colours }) {
+  const wall = wallpaperLook(wallpaper, catalog, "wp-box");
   const router = useRouter();
   const [pd, setPd] = useState(initial);
   const [err, setErr] = useState(false);
@@ -62,7 +64,7 @@ export function SetupForm({ initial, editing, wallpaper, colours }: { initial: P
           {editing && <a className="pcv-btn pcv-btn--ghost pcv-btn--lg" href="/portfolio">Cancel</a>}
         </div>
       </div>
-      <div className={`wp wp-box wp-${wallpaper}`} style={{ flex: "1 1 480px", minWidth: 0, minHeight: 520, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px", boxSizing: "border-box" }}>
+      <div className={wall.className} style={{ ...wall.style, flex: "1 1 480px", minWidth: 0, minHeight: 520, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px", boxSizing: "border-box" }}>
         <div className="cv-pane" style={{ ...(cvVars(colours) as React.CSSProperties), width: "100%", maxWidth: 560, animation: "satin-rise var(--satin-fall) var(--satin-glide) .2s both" }}>
           <CvHeader profile={pd} count={null} nameAs="h2" nameSize={48} staticLinks />
           <p style={{ margin: "12px 0 0", paddingTop: 14, borderTop: "1px dashed var(--cv-line)", font: "italic 300 18px/24px var(--font-display)", color: "var(--cv-ink-soft)" }}>Your projects table appears here.</p>

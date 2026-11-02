@@ -19,7 +19,7 @@ function contentSecurityPolicy(nonce: string, https: boolean): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob: ${r2}`, // custom wallpapers come from R2 via /w/<id>
     `connect-src 'self' ${supabase.origin} ${realtime} ${r2}`,
     "object-src 'none'",
     "base-uri 'self'",

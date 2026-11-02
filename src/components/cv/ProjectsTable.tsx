@@ -1,3 +1,4 @@
+import { tableLook, type Catalog } from "@/lib/catalog";
 import { ClockIcon, FileIcon, LinkIcon, PencilIcon, TickIcon, TrashIcon } from "./icons";
 
 export type DocView = { id: string; kind: "file" | "link"; name: string };
@@ -6,14 +7,15 @@ export type ProjectView = {
 };
 
 /** The projects table, markup as in ProjectCV-Table-Styles/demo.html. Owner adds "+ attach" and Actions. */
-export function ProjectsTable({ projects, table, owner }: {
-  projects: ProjectView[]; table: string;
+export function ProjectsTable({ projects, table, catalog, owner }: {
+  projects: ProjectView[]; table: string; catalog: Catalog;
   owner?: { onEdit: (p: ProjectView) => void; onDelete: (p: ProjectView) => void };
 }) {
+  const look = tableLook(table, catalog);
   return (
     <div className="tbl-scroll">
-      <table className={`tbl tbl-${table}`}>
-        <thead>
+      <table className={`tbl tbl-${look.base}`} style={look.style}>
+        <thead style={look.headStyle}>
           <tr>
             <th className="c-num">No.</th><th className="c-name">Project</th><th className="c-when">Timeline</th>
             <th className="c-desc">Description</th><th>Documents</th><th>Status</th>

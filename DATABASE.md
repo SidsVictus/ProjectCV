@@ -13,15 +13,16 @@ Supabase Postgres 17. Five ordered migrations in `supabase/migrations/`:
 ## Tables
 | Table | Purpose | Key rules |
 |---|---|---|
-| `profiles` | one per auth user: identity, role, status, page details, page style, slug | id = `auth.users.id` (cascade); role `super_admin/editor/viewer`; status `active/on_hold/disabled`; slug unique, set once from the name; wallpaper and table style limited to the catalogue; colours `#rrggbb` |
+| `profiles` | one per auth user: identity, role, status, page details, page style, slug | id = `auth.users.id` (cascade); role `super_admin/editor/viewer`; status `active/on_hold/disabled`; slug unique, set once from the name; wallpaper and table style must exist in `catalog` and not be hidden when changed (trigger; a page keeps one hidden later); colours `#rrggbb` |
 | `projects` | the rows of a page | name 1 to 120 chars; status `done/wip`; owner cascade |
 | `documents` | a project's files (R2) and links | owner always equals the project's owner (composite FK); link needs an http(s) URL; file needs a server-made key and MIME; `ready` false until the server confirms the upload |
 | `page_visits` | one per visitor per page per 30 minutes | visitor code is a random cookie value, never an identity |
 | `file_opens` | each document open by a visitor | owner opens are not recorded |
 | `edit_sessions` | editing heartbeats (30s) | a gap over 5 minutes starts a new session |
-| `activity` | feed for the admin "Happening now" rail | written only by triggers; Realtime publication |
+| `activity` | live events that light up stars in the admin sky | written only by triggers; Realtime publication |
 | `audit_log` | every admin change | written in the same transaction as the change |
 | `admin_allowlist` | emails that become super admins at first sign in | no client access |
+| `catalog` | wallpapers, table styles and colour swatches people pick from | key `(kind, id)`; built-ins seeded by migration 7; custom wallpapers are R2 images (`wallpapers/<id>.<ext>`, up to 8 MB, JPG, PNG or WebP), custom tables are a built-in design plus header, line and band colours; readable by everyone, changed only through the admin functions; hidden, never deleted |
 
 Relationships: `auth.users 1-1 profiles 1-n projects 1-n documents`; visits, opens, sessions and
 activity belong to a profile; deleting an auth user removes everything of theirs (cascade).
@@ -43,6 +44,10 @@ returns `{status: "unavailable"}`), `portfolio_stats(slug, range)` with range `7
 dashboard shows, in one JSON document), `admin_live_now()`, `admin_set_status(user, status)`,
 `admin_set_role(user, role)`, `admin_delete_account(user)` (returns R2 keys to delete), `admin_invited(user, role)`,
 `admin_log(text)`. A super admin cannot change or delete themselves.
+Catalogue: `admin_catalog_add_table(name, base, header, rule, band)`, `admin_catalog_add_colour(kind, name, hex)`,
+`admin_catalog_set_hidden(kind, id, hidden)` (at least one of each kind stays visible),
+`admin_catalog_start_wallpaper(name, mime, size)` then `admin_catalog_ready(id, size)` once the server has checked
+the upload (or `admin_catalog_abort(id)`). Each change is written to `audit_log`.
 
 All functions are `security definer` with `search_path = ''`. Execute rights are revoked from everyone
 and granted back per function (see SECURITY.md for the verified list).

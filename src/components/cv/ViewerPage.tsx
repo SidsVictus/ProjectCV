@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { PageStats, type Stats } from "@/components/stats/PageStats";
 import { cvVars, type Colours, type ProfileFields } from "@/lib/cv";
+import { wallpaperLook, type Catalog } from "@/lib/catalog";
 import { CvHeader } from "./CvHeader";
 import { EyePath, PIcon } from "./icons";
 import { Nudge } from "./Nudge";
@@ -25,14 +26,15 @@ function useVisit(slug: string, skip: boolean) {
   }, [slug, skip]);
 }
 
-export function ViewerPage({ slug, profile, projects, style, stats, previewing = false, isOwner = false }: {
+export function ViewerPage({ slug, profile, projects, style, stats, catalog, previewing = false, isOwner = false }: {
   slug: string; profile: ProfileFields; projects: ProjectView[]; style: { wallpaper: string; table: string } & Colours;
-  stats: Stats | null; previewing?: boolean; isOwner?: boolean;
+  stats: Stats | null; catalog: Catalog; previewing?: boolean; isOwner?: boolean;
 }) {
   useVisit(slug, previewing || isOwner);
   const owner = previewing || isOwner;
+  const wall = wallpaperLook(style.wallpaper, catalog);
   return (
-    <div className={`wp wp-${style.wallpaper}`} style={{ minHeight: "100vh", boxSizing: "border-box", padding: "16px 24px 48px" }}>
+    <div className={wall.className} style={{ ...wall.style, minHeight: "100vh", boxSizing: "border-box", padding: "16px 24px 48px" }}>
       <div className="screen-in" style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         {previewing && (
           <div className="pcv-viewer pcv-glass" style={{ flexWrap: "wrap", background: "rgba(2,1,5,.62)", position: "sticky", top: 16, zIndex: 5 }}>
@@ -47,7 +49,7 @@ export function ViewerPage({ slug, profile, projects, style, stats, previewing =
         <section className="cv-pane" style={cvVars(style) as React.CSSProperties} aria-label="Portfolio">
           <CvHeader profile={profile} count={projects.length} />
           {projects.length > 0
-            ? <ProjectsTable projects={projects} table={style.table} />
+            ? <ProjectsTable projects={projects} table={style.table} catalog={catalog} />
             : <p className="cv-empty">Projects are on their way.</p>}
         </section>
         {!previewing && (

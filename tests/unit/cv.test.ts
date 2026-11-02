@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contrast, cvVars, domainOf, hexRgb, paneAlpha, profileView } from "@/lib/cv";
 import { groupColleges, toPcvData, type Snapshot } from "@/lib/admin/pcvData";
+import type { Catalog } from "@/lib/catalog";
 import { linkSchema, profileSchema, styleSchema, uploadSchema } from "@/lib/validation";
 
 const blank = { full_name: "", headline: "", org: "", grad_year: "", location: "", about: "", linkedin: "", github: "", website: "" };
@@ -58,7 +59,7 @@ describe("validation", () => {
   });
   it("styles: only catalogue ids and six-digit hex colours", () => {
     expect(styleSchema.safeParse({ wallpaper: "oak", ink: "#ABCDEF" }).data).toEqual({ wallpaper: "oak", ink: "#abcdef" });
-    expect(styleSchema.safeParse({ wallpaper: "none" }).success).toBe(false);
+    expect(styleSchema.safeParse({ wallpaper: "Not an id!" }).success).toBe(false); // the database checks real ids
     expect(styleSchema.safeParse({ ink: "red" }).success).toBe(false);
   });
   it("uploads: allowed types only, at most 5 GB", () => {
@@ -95,7 +96,15 @@ describe("admin data mapping", () => {
       retention: { d1: 0, d7: 0, d30: 0, prev: { d1: 0, d7: 0, d30: 0 } },
       heat: [], files: [], audit: [{ who: "Asha", text: "put Ravi on hold", minutes: 4 }], feed: [],
     };
-    const d = toPcvData(snap);
+    const sw = (name: string, hex: string) => ({ name, hex, hidden: false });
+    const cat: Catalog = {
+      wallpapers: [{ id: "oak", name: "Oak grain", hidden: false, custom: false }, { id: "deco", name: "Art deco", hidden: false, custom: false },
+        { id: "w-abc", name: "Sunset", hidden: true, custom: true }],
+      tables: [{ id: "ledger", name: "Ledger", desc: "", hidden: false, base: "ledger", colours: null },
+        { id: "index", name: "Index", desc: "", hidden: false, base: "index", colours: null }],
+      ink: [sw("Ink black", "#141414"), sw("Midnight", "#1d2a44")], glass: [sw("Clear white", "#ffffff")], line: [sw("Soft grey", "#8a8a8a")],
+    };
+    const d = toPcvData(snap, cat);
     expect(d.users[0]).toMatchObject({ role: "Editor", status: "On hold", college: 0, statusDays: 3, visitorsR: { 30: 5 } });
     expect(d.WALLPAPERS[d.users[0].wallpaper].id).toBe("deco");
     expect(d.TABLE_STYLES[d.users[0].tableStyle].id).toBe("index");
@@ -104,5 +113,6 @@ describe("admin data mapping", () => {
     expect(d.AUDIT).toEqual([{ who: "Asha", text: "put Ravi on hold", when: 4 }]);
     expect(d.cohorts[0].label).toBe("26 Oct");
     expect(d.WALLPAPERS.every((w) => typeof w.css === "string" && w.css.length > 10)).toBe(true);
+    expect(d.WALLPAPERS[2]).toMatchObject({ id: "w-abc", hidden: true, css: expect.stringContaining('url("/w/w-abc")') });
   });
 });

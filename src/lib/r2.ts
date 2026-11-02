@@ -46,6 +46,16 @@ export function presignDownload(key: string, name: string): Promise<string> {
   );
 }
 
+/**
+ * A wallpaper image link. Signed as of the start of the day (UTC) so the link is identical all day
+ * and browsers can cache the image; it stays valid for two days.
+ */
+export function presignWallpaper(key: string): Promise<string> {
+  const day = new Date(); day.setUTCHours(0, 0, 0, 0);
+  return getSignedUrl(client(), new GetObjectCommand({ Bucket: bucket(), Key: key, ResponseCacheControl: "public, max-age=86400" }),
+    { expiresIn: 2 * 24 * 60 * 60, signingDate: day });
+}
+
 /** Size and type of an uploaded object, or null when it is not there. */
 export async function headObject(key: string): Promise<{ size: number; type: string } | null> {
   try {

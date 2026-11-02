@@ -44,6 +44,7 @@ export async function saveStyle(input: unknown): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return fail("Please sign in again.");
   const { error } = await supabase.from("profiles").update(parsed.data).eq("id", user.id);
+  if (error?.code === "23514") return fail("That style is no longer offered. Please pick another.");
   if (error) { console.error("saveStyle", error.message); return fail(GENERIC); }
   return { ok: true, data: null };
 }

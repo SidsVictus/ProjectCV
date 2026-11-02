@@ -442,6 +442,100 @@
   }
   function closeDialogs() { $$(".dialog").forEach((d) => d.classList.remove("on")); }
 
+  /* ================================================================= Catalogue (section 05) */
+  function initCatalog() {
+    const CAT = API.catalog, list = $("#catList"), form = $("#catAdd");
+    let tab = "wallpaper";
+    const tabs = seg($("#catSeg"), (b) => { tab = b.dataset.tab; render(); });
+    $("#manageCatalogBtn").addEventListener("click", () => { $("#catalogDialog").classList.add("on"); $("#scrim").classList.add("on"); tabs.place(); render(); });
+    const KIND = { ink: "Text", glass: "Glass", line: "Lines" };
+    const WORD = { wallpaper: "wallpaper", table: "table style", ink: "text colour", glass: "glass colour", line: "line colour" };
+    const swatches = () => [
+      ...D.TEXT_COLOURS.filter((c) => c.hidden !== undefined).map((c) => ({ kind: "ink", ref: c, id: c.hex, colour: c.hex })),
+      ...D.GLASS_COLOURS.filter((c) => c.hidden !== undefined).map((c) => ({ kind: "glass", ref: c, id: c.solid, colour: c.solid })),
+      ...D.LINE_COLOURS.map((c) => ({ kind: "line", ref: c, id: c.hex, colour: c.hex }))
+    ];
+    function items() {
+      if (tab === "wallpaper") return D.WALLPAPERS.map((w) => ({ kind: "wallpaper", ref: w, id: w.id, thumb: w.css, sub: w.custom ? "Uploaded" : "Built in" }));
+      if (tab === "table") return D.TABLE_STYLES.map((t) => ({ kind: "table", ref: t, id: t.id, dots: t.colours ? [t.colours.header, t.colours.rule, t.colours.band] : null,
+        sub: t.colours ? (D.TABLE_BASES.find((b) => b.id === t.base) || { name: "" }).name + " design" : "Built in" }));
+      return swatches().map((s) => ({ kind: s.kind, ref: s.ref, id: s.id, thumb: s.colour, sub: KIND[s.kind] + " · " + s.colour }));
+    }
+    function render() {
+      const rows = items();
+      list.innerHTML = rows.map((it, i) => '<li class="cat-item' + (it.ref.hidden ? " is-hidden" : "") + '">' +
+        (it.dots ? '<span class="cat-dots">' + it.dots.map((c) => '<i style="background:' + c + '"></i>').join("") + "</span>" : '<span class="cat-thumb" style="background:' + (it.thumb || "var(--night-300)") + '"></span>') +
+        '<span class="cat-name">' + esc(it.ref.name) + "<small>" + esc(it.sub) + (it.ref.hidden ? " · Hidden" : "") + "</small></span>" +
+        '<button class="btn btn--secondary btn--sm" type="button" data-i="' + i + '">' + (it.ref.hidden ? "Show" : "Hide") + "</button></li>").join("");
+      list.onclick = async (e) => {
+        const b = e.target.closest("button"); if (!b) return;
+        const it = rows[+b.dataset.i], hide = !it.ref.hidden;
+        b.disabled = true;
+        const res = await CAT.setHidden({ kind: it.kind, id: it.id, hidden: hide });
+        b.disabled = false;
+        if (!res.ok) { toast(res.error); return; }
+        it.ref.hidden = hide;
+        logChange((hide ? "hid the " : "showed the ") + WORD[it.kind] + " " + it.ref.name);
+        render();
+      };
+      form.innerHTML = FORMS[tab];
+      if (tab === "table") $("#cBase").innerHTML = D.TABLE_BASES.map((b) => "<option value=\"" + b.id + "\">" + esc(b.name) + "</option>").join("");
+      $("#cAddBtn").onclick = () => add($("#cAddBtn"));
+    }
+    const FORMS = {
+      wallpaper: '<h4>Add a wallpaper</h4><div class="cat-row"><label class="field">Name<input class="input" id="cName" maxlength="40" placeholder="e.g. Golden hour"></label>' +
+        '<label class="field">Image<input class="input" id="cFile" type="file" accept="image/jpeg,image/png,image/webp"></label></div><p class="caption">JPG, PNG or WebP, up to 8 MB. Large, calm images work best behind text.</p>' +
+        '<div class="dialog__actions" style="margin-top:8px"><button class="btn btn--primary" type="button" id="cAddBtn">Upload wallpaper</button></div>',
+      table: '<h4>Add a table style</h4><div class="cat-row"><label class="field">Name<input class="input" id="cName" maxlength="40" placeholder="e.g. Gold ledger"></label>' +
+        '<label class="field">Design<select class="input" id="cBase"></select></label></div>' +
+        '<div class="cat-row"><label class="field">Header<input class="cat-colour" id="cHeader" type="color" value="#b8873a"></label><label class="field">Lines<input class="cat-colour" id="cRule" type="color" value="#6d4c1c"></label><label class="field">Bands<input class="cat-colour" id="cBand" type="color" value="#e9cf98"></label></div>' +
+        '<p class="caption">The design keeps its layout and takes these colours. Pick a header colour that reads well on light and dark glass.</p>' +
+        '<div class="dialog__actions" style="margin-top:8px"><button class="btn btn--primary" type="button" id="cAddBtn">Add table style</button></div>',
+      colour: '<h4>Add a colour</h4><div class="cat-row"><label class="field">For<select class="input" id="cKind"><option value="ink">Text</option><option value="glass">Glass pane</option><option value="line">Lines and grid</option></select></label>' +
+        '<label class="field">Name<input class="input" id="cName" maxlength="40" placeholder="e.g. Honey"></label><label class="field">Colour<input class="cat-colour" id="cHex" type="color" value="#c99a3b"></label></div>' +
+        '<div class="dialog__actions" style="margin-top:8px"><button class="btn btn--primary" type="button" id="cAddBtn">Add colour</button></div>'
+    };
+    async function add(btn) {
+      const name = $("#cName").value.trim();
+      if (!name) { toast("Give it a name."); $("#cName").focus(); return; }
+      btn.disabled = true;
+      try {
+        if (tab === "wallpaper") {
+          const file = $("#cFile").files[0];
+          if (!file) { toast("Choose an image to upload."); return; }
+          const label = btn.textContent; btn.textContent = "Uploading...";
+          const res = await CAT.addWallpaper(name, file);
+          btn.textContent = label;
+          if (!res.ok) { toast(res.error); return; }
+          D.WALLPAPERS.push({ id: res.data.id, name, hidden: false, custom: true, css: 'url("/w/' + res.data.id + '") center / cover no-repeat #8a8170' });
+          done("wallpaper", name);
+        } else if (tab === "table") {
+          const t = { name, base: $("#cBase").value, header: $("#cHeader").value, rule: $("#cRule").value, band: $("#cBand").value };
+          const res = await CAT.addTable(t);
+          if (!res.ok) { toast(res.error); return; }
+          D.TABLE_STYLES.push({ id: res.data.id, name, hidden: false, base: t.base, colours: { header: t.header, rule: t.rule, band: t.band } });
+          done("table", name);
+        } else {
+          const kind = $("#cKind").value, hex = $("#cHex").value.toLowerCase();
+          const res = await CAT.addColour({ kind, name, hex });
+          if (!res.ok) { toast(res.error); return; }
+          const pool = kind === "ink" ? D.TEXT_COLOURS : kind === "glass" ? D.GLASS_COLOURS : D.LINE_COLOURS;
+          const have = pool.find((c) => c.hidden !== undefined && (c.solid || c.hex) === hex);
+          if (have) { have.name = name; have.hidden = false; }
+          else if (kind === "glass") pool.push({ name, hex: "rgba(" + parseInt(hex.slice(1, 3), 16) + "," + parseInt(hex.slice(3, 5), 16) + "," + parseInt(hex.slice(5, 7), 16) + ",0.5)", solid: hex, hidden: false });
+          else pool.push({ name, hex, hidden: false });
+          done(kind, name);
+        }
+      } finally { btn.disabled = false; }
+    }
+    function done(kind, name) {
+      logChange("added the " + WORD[kind] + " " + name);
+      renderCustom(); render();
+      list.scrollTop = list.scrollHeight;
+      toast(name + " was added. People can pick it now.");
+    }
+  }
+
   /* ================================================================= Add user */
   function initAddUser() {
     $("#addUserBtn").addEventListener("click", () => { $("#addDialog").classList.add("on"); $("#scrim").classList.add("on"); setTimeout(() => $("#aName").focus(), 50); });
@@ -540,7 +634,7 @@
 
     renderRange(true);
     initRetention(); renderEngagement(); renderCustom(); renderAccounts(); renderAudit();
-    initUsers(); initDrawer(); initAddUser(); initPalette();
+    initUsers(); initDrawer(); initAddUser(); initCatalog(); initPalette();
     liveFeed();
     observeReveals(document);
 

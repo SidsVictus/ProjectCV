@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { TABLES, WALLPAPERS } from "./cv";
 import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES } from "./r2-rules";
 
 const text = (max: number) => z.string().trim().max(max);
@@ -18,8 +17,9 @@ export const profileSchema = z.object({
 });
 
 export const styleSchema = z.object({
-  wallpaper: z.enum(WALLPAPERS.map((w) => w.id) as [string, ...string[]]).optional(),
-  table_style: z.enum(TABLES.map((t) => t.id) as [string, ...string[]]).optional(),
+  // Catalogue ids; the database refuses ones that do not exist or are hidden.
+  wallpaper: z.string().regex(/^[a-z0-9-]{1,40}$/).optional(),
+  table_style: z.string().regex(/^[a-z0-9-]{1,40}$/).optional(),
   ink: hex.optional(),
   glass: hex.optional(),
   line: hex.optional(),

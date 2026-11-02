@@ -7,6 +7,7 @@ import { deleteProject, heartbeat, saveStyle } from "@/app/actions/portfolio";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { PageStats, type Stats } from "@/components/stats/PageStats";
 import { DEFAULT_COLOURS, cvVars, type Colours, type ProfileFields } from "@/lib/cv";
+import { wallpaperLook, type Catalog } from "@/lib/catalog";
 import { CvHeader } from "./CvHeader";
 import { DeleteDialog, ProjectDialog, ShareDialog } from "./Dialogs";
 import { PencilIcon } from "./icons";
@@ -16,9 +17,9 @@ import { Nudge } from "./Nudge";
 
 type Modal = null | "tables" | "background" | "colours" | "share" | { add: ProjectView | null } | { del: ProjectView };
 
-export function PortfolioEditor({ profile, style, projects, slug, shareUrl, superAdmin, stats }: {
+export function PortfolioEditor({ profile, style, projects, slug, shareUrl, superAdmin, stats, catalog }: {
   profile: ProfileFields; style: { wallpaper: string; table: string } & Colours; projects: ProjectView[];
-  slug: string; shareUrl: string; superAdmin: boolean; stats: Stats | null;
+  slug: string; shareUrl: string; superAdmin: boolean; stats: Stats | null; catalog: Catalog;
 }) {
   const router = useRouter();
   const [modal, setModal] = useState<Modal>(null);
@@ -67,9 +68,10 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
   const vars = cvVars(colours) as React.CSSProperties;
   const initial = (profile.full_name || "Y")[0].toUpperCase();
   const preview = () => router.push("/portfolio/preview");
+  const wall = wallpaperLook(shownBg, catalog);
 
   return (
-    <div className={`wp wp-${shownBg}`} style={{ minHeight: "100vh", boxSizing: "border-box", padding: "16px 24px 120px", overflowX: "clip" }}>
+    <div className={wall.className} style={{ ...wall.style, minHeight: "100vh", boxSizing: "border-box", padding: "16px 24px 120px", overflowX: "clip" }}>
       <div className="screen-in" style={{ maxWidth: 1080, margin: "0 auto" }}>
         <nav className="pcv-nav pcv-glass" aria-label="Main" style={{ position: "sticky", top: 16, zIndex: 6, height: 60, padding: "0 8px 0 10px", background: "rgba(2,1,5,.62)" }}>
           <span className="pcv-nav__brand"><img src="/brand/logo-mark.png" alt="Project CV" style={{ width: 42, height: 42 }} /></span>
@@ -129,7 +131,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
           <section className="cv-pane" style={vars} aria-label="Portfolio">
             <a className="cv-edit" href="/setup" style={{ textDecoration: "none" }}><PencilIcon />Edit details</a>
             <CvHeader profile={profile} count={projects.length} />
-            <ProjectsTable projects={projects} table={table} owner={{ onEdit: (p) => setModal({ add: p }), onDelete: (p) => setModal({ del: p }) }} />
+            <ProjectsTable projects={projects} table={table} catalog={catalog} owner={{ onEdit: (p) => setModal({ add: p }), onDelete: (p) => setModal({ del: p }) }} />
             {projects.length === 0 && <p className="cv-empty">Your first project goes here.</p>}
             <button type="button" className="cv-add" onClick={() => setModal({ add: null })}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Add a project
@@ -139,9 +141,9 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
         </div>
       </div>
 
-      {modal === "tables" && <TablePicker current={table} wallpaper={bg} colours={colours} projects={projects} onApply={applyTable} onClose={() => setModal(null)} />}
-      {modal === "background" && <WallpaperPicker current={bg} onTry={setTryBg} onApply={applyWall} onCancel={() => { setTryBg(bg); setModal(null); }} />}
-      {modal === "colours" && <ColourPanel colours={colours} onChange={setColours} onReset={() => setColours(DEFAULT_COLOURS)} onDone={closeColours} />}
+      {modal === "tables" && <TablePicker current={table} wallpaper={bg} colours={colours} projects={projects} catalog={catalog} onApply={applyTable} onClose={() => setModal(null)} />}
+      {modal === "background" && <WallpaperPicker current={bg} catalog={catalog} onTry={setTryBg} onApply={applyWall} onCancel={() => { setTryBg(bg); setModal(null); }} />}
+      {modal === "colours" && <ColourPanel colours={colours} catalog={catalog} onChange={setColours} onReset={() => setColours(DEFAULT_COLOURS)} onDone={closeColours} />}
       {modal === "share" && <ShareDialog url={shareUrl} onClose={() => setModal(null)} onPreview={preview} />}
       {modal && typeof modal === "object" && "add" in modal && (
         <ProjectDialog project={modal.add} onClose={() => setModal(null)} onSaved={() => router.refresh()} />
