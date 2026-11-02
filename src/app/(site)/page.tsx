@@ -21,7 +21,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
       <div className="dome" aria-hidden="true"><div className="dome__disc" /></div>
       <section className="dome-panel">
         <div className="dome-card">
-          <span className="dome-card__mark"><img src="/brand/logo-mark.png" alt="Project CV" /></span>
+          <span className="dome-card__mark"><img src="/brand/logo-mark-filled.png" alt="Project CV" /></span>
           <h1 className="dome-card__title">Let your work<br />speak for you.</h1>
           <p className="dome-card__sub">
             {blocked && BLOCKED[blocked] ? BLOCKED[blocked] : "Add every project you have built, from code to circuits to canvas, attach the proof, and share your page with anyone."}

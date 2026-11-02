@@ -2,7 +2,7 @@
 .dome-signin {
   --gold: #b8873a; --gold-deep: #6d4c1c; --gold-soft: #e9cf98; --ivory: #fbf4e6;
   position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden;
-  --paper: linear-gradient(170deg, #ece0c6 0%, #dbc7a3 100%) fixed;
+  --paper: linear-gradient(170deg, #e2d1b0 0%, #cdb68e 100%) fixed;
   background: var(--paper);
   color: var(--gold-deep);
 }
@@ -37,7 +37,7 @@
 .dome-card__mark img { width: 100%; height: 100%; display: block; }
 .dome-card__title { margin: 0; font: italic 300 clamp(40px, 4.2vw, 56px)/1.02 var(--font-display); letter-spacing: -.02em; color: #4a3311; }
 .dome-card__sub { margin: 0; font-size: 16px; line-height: 25px; color: #5e4826; }
-.dome-card__rule { display: flex; align-items: center; gap: 12px; font: 600 12px/16px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.dome-card__rule { display: flex; align-items: center; gap: 12px; font: 600 12px/16px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: #7f5d22; }
 .dome-card__rule::before, .dome-card__rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(184, 135, 58, .6), transparent); }
 .dome-card__legal { margin: 2px 0 0; font-size: 12.5px; line-height: 18px; color: #5e4826; }
 .dome-card__legal a { color: var(--gold-deep); }
