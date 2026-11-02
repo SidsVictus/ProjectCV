@@ -1,0 +1,59 @@
+/* Sign in: a slowly turning dome on the left, a golden glass sign-in card on the right. */
+.dome-signin {
+  --gold: #b8873a; --gold-deep: #6d4c1c; --gold-soft: #e9cf98; --ivory: #fbf4e6;
+  position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden;
+  --paper: linear-gradient(170deg, #ece0c6 0%, #dbc7a3 100%) fixed;
+  background: var(--paper);
+  color: var(--gold-deep);
+}
+
+/* The photo shows the dome's left half; the disc pairs it with its mirror image to make a whole dome. */
+.dome {
+  --r: max(50vh, 36vw);
+  position: absolute; left: 50%; top: 50%; width: calc(var(--r) * 2); height: calc(var(--r) * 2);
+  translate: -50% -50%; border-radius: 50%; overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(109, 76, 28, .25), 0 40px 120px -20px rgba(70, 45, 10, .55);
+}
+.dome__disc { position: absolute; inset: 0; animation: dome-turn 240s linear infinite; will-change: transform; }
+.dome__disc::before, .dome__disc::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 50%;
+  background: url("/brand/dome.jpg") right center / auto 100% no-repeat;
+}
+.dome__disc::before { left: 0; }
+.dome__disc::after { right: 0; transform: scaleX(-1); }
+@keyframes dome-turn { to { transform: rotate(360deg); } }
+
+/* Right half: the auth box itself, solid, covering the dome's other half */
+.dome-panel {
+  position: absolute; inset: 0 0 0 50%; display: grid; place-items: center; padding: 40px clamp(24px, 6vw, 96px);
+  background: var(--paper); /* same fixed gradient as the page, so both halves match exactly */
+  box-shadow: -30px 0 80px -30px rgba(90, 60, 15, .45);
+}
+.dome-card {
+  width: min(420px, 100%); display: grid; gap: 18px;
+  animation: satin-rise 900ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.dome-card__mark { width: 52px; height: 52px; border-radius: 16px; background: #020105; display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(184, 135, 58, .5); }
+.dome-card__mark img { width: 38px; height: 38px; }
+.dome-card__title { margin: 0; font: italic 300 clamp(40px, 4.2vw, 56px)/1.02 var(--font-display); letter-spacing: -.02em; color: #4a3311; }
+.dome-card__sub { margin: 0; font-size: 16px; line-height: 25px; color: #5e4826; }
+.dome-card__rule { display: flex; align-items: center; gap: 12px; font: 600 12px/16px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.dome-card__rule::before, .dome-card__rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(184, 135, 58, .6), transparent); }
+.dome-card__legal { margin: 2px 0 0; font-size: 12.5px; line-height: 18px; color: #5e4826; }
+.dome-card__legal a { color: var(--gold-deep); }
+.dome-card [role="alert"] { color: #8a3b12 !important; }
+
+/* Google's official light theme button (white, #747775 border, #1f1f1f text), full width */
+.gsi-material-button.gsi-light { background: #ffffff; border: 1px solid #747775; color: #1f1f1f; width: 100%; max-width: none; height: 48px; }
+.gsi-material-button.gsi-light .gsi-material-button-contents { color: #1f1f1f; }
+.gsi-material-button.gsi-light .gsi-material-button-content-wrapper { justify-content: center; }
+.gsi-material-button.gsi-light .gsi-material-button-contents { flex-grow: 0; }
+.gsi-material-button.gsi-light:hover .gsi-material-button-state { background: #303030; opacity: 8%; }
+
+/* Phones and narrow screens: dome on top, card below it over the dome's lower half */
+@media (max-width: 860px) {
+  .dome { --r: 62vw; top: 26vh; }
+  .dome-panel { inset: 26vh 0 0 0; place-items: start center; padding: 32px 20px 36px; border-radius: 28px 28px 0 0; box-shadow: 0 -24px 60px -30px rgba(90, 60, 15, .45); }
+  .dome-signin { min-height: max(100dvh, 780px); }
+}
+@media (prefers-reduced-motion: reduce) { .dome__disc { animation: none; } }

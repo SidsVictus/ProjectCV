@@ -1,7 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 import { redirect } from "next/navigation";
-import { AuthScreen, LegalLine } from "@/components/auth/AuthScreen";
+import { LegalLine } from "@/components/auth/AuthScreen";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { getProfile, nextPath } from "@/lib/auth";
+import "./signin.css";
 
 const BLOCKED: Record<string, string> = {
   on_hold: "Your account is on hold, so you cannot sign in for now. Your page is still live for anyone with your link.",
@@ -14,10 +16,21 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   if (p) redirect(nextPath(p));
   const { blocked } = await searchParams;
   return (
-    <AuthScreen label="Sign in" title={<>Built it?<br />Show it off.</>}
-      sub={blocked && BLOCKED[blocked] ? BLOCKED[blocked] : "Add every project you have built, from code to circuits to canvas, attach the proof, and share your page with anyone."}
-      legal={<LegalLine />}>
-      <div className="pcv-auth__actions"><GoogleButton /></div>
-    </AuthScreen>
+    <main className="dome-signin" aria-label="Sign in">
+      {/* The dome turns slowly on the page centre; its right half passes behind the glass panel. */}
+      <div className="dome" aria-hidden="true"><div className="dome__disc" /></div>
+      <section className="dome-panel">
+        <div className="dome-card">
+          <span className="dome-card__mark"><img src="/brand/logo-mark.png" alt="Project CV" /></span>
+          <h1 className="dome-card__title">Let your work<br />speak for you.</h1>
+          <p className="dome-card__sub">
+            {blocked && BLOCKED[blocked] ? BLOCKED[blocked] : "Add every project you have built, from code to circuits to canvas, attach the proof, and share your page with anyone."}
+          </p>
+          <div className="dome-card__rule"><span>Sign in to continue</span></div>
+          <GoogleButton variant="light" />
+          <p className="dome-card__legal"><LegalLine /></p>
+        </div>
+      </section>
+    </main>
   );
 }

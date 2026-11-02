@@ -17,7 +17,7 @@ test("no horizontal scroll on the owner and public pages @mobile", async ({ page
 test("sign in screen renders its five things @mobile", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("img", { name: "Project CV" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Built it\?/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Let your work/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in with Google" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Terms & Conditions" })).toBeVisible();
 });

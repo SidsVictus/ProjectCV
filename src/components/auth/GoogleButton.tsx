@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-/** Google's official dark sign-in button, unchanged (DESIGN.md section 15). */
-export function GoogleButton() {
+/** Google's official sign-in button: dark (DESIGN.md section 15) or Google's light theme. */
+export function GoogleButton({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const [error, setError] = useState("");
   async function signIn() {
     setError("");
@@ -16,7 +16,7 @@ export function GoogleButton() {
   }
   return (
     <>
-      <button type="button" className="gsi-material-button" onClick={signIn}>
+      <button type="button" className={`gsi-material-button${variant === "light" ? " gsi-light" : ""}`} onClick={signIn}>
         <div className="gsi-material-button-state" />
         <div className="gsi-material-button-content-wrapper">
           <div className="gsi-material-button-icon">

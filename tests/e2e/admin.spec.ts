@@ -44,7 +44,7 @@ test("super admin dashboard: real numbers, access changes, add and delete", asyn
   const o = await owner.newPage();
   await o.goto("/portfolio");
   await expect(o).toHaveURL(/\?blocked=on_hold$/);
-  await expect(o.locator(".pcv-auth__sub")).toContainText("Your account is on hold");
+  await expect(o.locator(".dome-card__sub")).toContainText("Your account is on hold");
 
   // disabled: the public page becomes unavailable
   await row.getByRole("button", { name: "Manage" }).click();
