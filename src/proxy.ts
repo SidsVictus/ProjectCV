@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabaseUrl } from "@/lib/supabase/env";
 
 /**
  * Content-Security-Policy with a fresh nonce per request (Next.js adds it to its own scripts).
@@ -8,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * would switch that off.
  */
 function contentSecurityPolicy(nonce: string, https: boolean): string {
-  const supabase = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
+  const supabase = new URL(getSupabaseUrl());
   const realtime = `${supabase.protocol === "https:" ? "wss:" : "ws:"}//${supabase.host}`;
   // R2 presigned uploads go straight from the browser to the bucket.
   const r2 = process.env.R2_ENDPOINT ? new URL(process.env.R2_ENDPOINT).origin : "https://*.r2.cloudflarestorage.com";

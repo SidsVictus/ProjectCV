@@ -51,24 +51,38 @@ export function ProjectDialog({ project, onClose, onSaved }: {
     setLinkDraft("");
   }
 
+  // Once the project row exists, retries update it instead of creating a copy.
+  const savedId = useRef<string | null>(project?.id ?? null);
+  const inFlight = useRef(false);
+
   async function save() {
     if (!d.name.trim()) { setNameErr(true); return; }
-    setMsg(""); setBusy("Saving");
-    const links = pending.filter((p) => p.kind === "link").map((p) => p.url!);
-    const r = await saveProject({ id: project?.id ?? null, project: d, addLinks: links, removeDocs: removed });
-    if (!r.ok) { setMsg(r.error); setBusy(""); return; }
-    const files = pending.filter((p) => p.kind === "file");
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i].file!;
-      setBusy(`Uploading ${i + 1} of ${files.length}`);
-      const s = await startUpload({ projectId: r.data.id, name: f.name, mime: f.type, size: f.size });
-      if (!s.ok) { setMsg(s.error); setBusy(""); onSaved(); return; }
-      await fetch(s.data.url, { method: "PUT", body: f, headers: { "Content-Type": f.type } }).catch(() => null);
-      // The server checks the object itself; a failed PUT is found there and its pending row removed.
-      const fin = await finishUpload(s.data.id);
-      if (!fin.ok) { setMsg(`${f.name}: ${fin.error} Your project and other changes were saved.`); setBusy(""); onSaved(); return; }
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      setMsg(""); setBusy("Saving");
+      const links = pending.filter((p) => p.kind === "link").map((p) => p.url!);
+      const r = await saveProject({ id: savedId.current, project: d, addLinks: links, removeDocs: removed });
+      if (!r.ok) { setMsg(r.error); setBusy(""); return; }
+      savedId.current = r.data.id;
+      setRemoved([]);
+      setPending((p) => p.filter((x) => x.kind === "file")); // links are saved now
+      const files = pending.filter((p) => p.kind === "file");
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i].file!;
+        setBusy(`Uploading ${i + 1} of ${files.length}`);
+        const s = await startUpload({ projectId: r.data.id, name: f.name, mime: f.type, size: f.size });
+        if (!s.ok) { setMsg(s.error); setBusy(""); onSaved(); return; }
+        await fetch(s.data.url, { method: "PUT", body: f, headers: { "Content-Type": f.type } }).catch(() => null);
+        // The server checks the object itself; a failed PUT is found there and its pending row removed.
+        const fin = await finishUpload(s.data.id);
+        if (!fin.ok) { setMsg(`${f.name}: ${fin.error} Your project and other changes were saved.`); setBusy(""); onSaved(); return; }
+        setPending((p) => p.filter((x) => x.key !== files[i].key)); // uploaded; a retry skips it
+      }
+      onSaved(); onClose();
+    } finally {
+      inFlight.current = false;
     }
-    onSaved(); onClose();
   }
 
   return (

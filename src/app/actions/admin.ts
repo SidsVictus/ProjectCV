@@ -61,7 +61,11 @@ export async function invite(name: unknown, email: unknown, role: unknown): Prom
     return { ok: false, error: /already|exists|registered/i.test(error?.message ?? "") ? "That email already has an account." : GENERIC };
   }
   const r = await supabase.rpc("admin_invited", { p_user: data.user.id, p_role: parsed.data.role });
-  if (r.error) return { ok: false, error: explain(r.error.message) };
+  if (r.error) {
+    // Undo the half-made account so a retry with the same email works.
+    await createAdminClient().auth.admin.deleteUser(data.user.id).catch(() => null);
+    return { ok: false, error: explain(r.error.message) };
+  }
   return { ok: true, data: { id: data.user.id } };
 }
 

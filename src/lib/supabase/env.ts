@@ -6,7 +6,9 @@ function required(name: string, value: string | undefined): string {
 }
 
 export function getSupabaseUrl(): string {
-  return required("NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const url = required("NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  if (!URL.canParse(url)) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not a valid URL (expected https://<project>.supabase.co)");
+  return url;
 }
 
 export function getSupabaseAnonKey(): string {

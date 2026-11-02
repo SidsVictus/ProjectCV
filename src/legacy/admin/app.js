@@ -148,25 +148,10 @@
     signup: { t: (u) => "<b>" + esc(u.name) + "</b> signed up" + (u.college !== OTHER ? " from " + esc(D.COLLEGES[u.college].short) : ""), warm: false }
   };
   function liveFeed() {
-    const feed = $("#feed"), users = D.users;
-    const agoShort = (ms) => { const s2 = Math.max(0, Math.round(ms / 1000)); return s2 < 45 ? "now" : s2 < 3600 ? Math.round(s2 / 60) + "m" : s2 < 86400 ? Math.round(s2 / 3600) + "h" : Math.round(s2 / 86400) + "d"; };
-    function push(ev, silent) {
-      const i = users.findIndex((x) => x.id === ev.user_id), u = users[i], kind = EVENTS[ev.kind];
-      if (!u || u.deleted || !kind) return;
-      const li = document.createElement("li");
-      li.innerHTML = '<span class="avatar avatar--xs' + (kind.warm ? " avatar--warm" : "") + '">' + esc(u.name.charAt(0)) + "</span><span>" + kind.t(u, ev) + "</span><time></time>";
-      li._at = ev.at ? new Date(ev.at).getTime() : Date.now();
-      li.addEventListener("click", () => openDrawer(u)); li.style.cursor = "pointer";
-      feed.prepend(li);
-      while (feed.children.length > 9) feed.lastChild.remove();
-      stamp();
-      if (!silent && sky) sky.ping(i, kind.warm);
-    }
-    function stamp() { $$("li", feed).forEach((li) => { const t = $("time", li); if (t) t.textContent = agoShort(Date.now() - li._at); }); }
-    D.feed.slice().reverse().forEach((ev) => push(ev, true));
-    if (!feed.children.length) feed.innerHTML = '<li class="caption" style="cursor:default">Edits, uploads and visits appear here as they happen.</li>';
-    API.subscribe((ev) => { const e = $("li.caption", feed); if (e) e.remove(); push(ev, false); });
-    setInterval(stamp, 30000);
+    API.subscribe((ev) => {
+      const i = D.users.findIndex((x) => x.id === ev.user_id), u = D.users[i], kind = EVENTS[ev.kind];
+      if (u && !u.deleted && kind && sky) sky.ping(i, kind.warm);
+    });
     const lc = $("#liveCount"); lc.textContent = D.liveNow;
     setInterval(() => { if (!document.hidden) API.liveNow().then((n) => { if (n != null) lc.textContent = n; }); }, 20000);
   }
@@ -254,11 +239,6 @@
     C.sparkline($("#editSpark"), bucket(D.daily.editMinutes, "mean").cur, { h: 64 });
   }
   function renderEngagement() {
-    C.heatmap($("#heatmap"), D.heat);
-    const WD = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], hr = (h) => (h === 0 ? "midnight" : h < 12 ? h + " am" : h === 12 ? "noon" : h - 12 + " pm");
-    let hi = [0, 0], lo = [0, 0];
-    D.heat.forEach((row, d) => row.forEach((v, h) => { if (v > D.heat[hi[0]][hi[1]]) hi = [d, h]; if (v < D.heat[lo[0]][lo[1]]) lo = [d, h]; }));
-    $("#heatInsight").textContent = D.heat[hi[0]][hi[1]] ? WD[hi[0]] + " around " + hr(hi[1]) + " is the busiest time. " + WD[lo[0]] + " around " + hr(lo[1]) + " is the quietest, a good time for maintenance." : "Editing sessions appear here once people start editing.";
     const users = alive(), s = users.map((u) => u.sessions).sort((a, b) => a - b), median = s.length ? s[Math.floor(s.length / 2)] : 0;
     const binsDef = [["1", 1, 1], ["2", 2, 2], ["3", 3, 3], ["4", 4, 4], ["5", 5, 5], ["6 to 8", 6, 8], ["9+", 9, 999]];
     const bins = binsDef.map((b) => ({ label: b[0], value: s.filter((x) => x >= b[1] && x <= b[2]).length, hi: median >= b[1] && median <= b[2] }));
@@ -349,7 +329,7 @@
     $("#bellBtn").setAttribute("aria-label", att.length ? "Notifications, " + att.length + " need attention" : "Notifications, nothing needs attention");
     const ping = $("#bellBtn .ping"); if (ping) ping.hidden = !att.length;
     const ul = $("#attention");
-    ul.innerHTML = att.length ? "" : '<li><span><b>Nothing needs a look</b>Accounts on hold and quiet ones show up here</span></li>';
+    ul.innerHTML = att.length ? "" : '<li style="grid-template-columns:1fr"><span><b>Nothing needs a look</b>Accounts on hold and quiet ones show up here</span></li>';
     ul.innerHTML += att.map((a, i) => '<li><span class="att-ico"><svg class="ico"><use href="#' + a.ico + '"/></svg></span><span><b>' + esc(a.title) + "</b>" + esc(a.text) + '</span><button class="btn btn--secondary btn--sm" type="button" data-i="' + i + '">' + a.act + "</button></li>").join("");
     ul.onclick = (e) => { const b = e.target.closest("button"); if (b) att[+b.dataset.i].fn(); };
   }
@@ -566,7 +546,7 @@
 
     // Redraw width-driven charts on resize
     let rw = window.innerWidth, rt;
-    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (Math.abs(window.innerWidth - rw) < 40) return; rw = window.innerWidth; renderTrend(); renderActivity(); C.heatmap($("#heatmap"), D.heat); renderKPIs(false); renderEngagement(); }, 200); });
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (Math.abs(window.innerWidth - rw) < 40) return; rw = window.innerWidth; renderTrend(); renderActivity(); renderKPIs(false); renderEngagement(); }, 200); });
 
     // Scroll cue disappears at the bottom
     const cue = $("#scrollCue");

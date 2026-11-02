@@ -90,12 +90,10 @@ test("super admin dashboard: real numbers, access changes, add and delete", asyn
   await a.reload();
   await expect(a.getByRole("heading", { name: "Nothing here." })).toBeVisible();
 
-  // live feed: a new project elsewhere shows up without a reload
-  const live = await readyEditor("Live Builder");
-  await page.reload();
-  await expect(page.locator("#feed")).toBeVisible();
-  await service().from("projects").insert({ owner_id: live.id, name: "Weather balloon" });
-  await expect(page.locator("#feed")).toContainText("Live Builder added Weather balloon", { timeout: 15_000 });
+  // removed cards stay removed; the empty "Needs a look" message reads on one line
+  await expect(page.locator("#feed, #heatmap")).toHaveCount(0);
+  const empty = page.locator("#attention li").first();
+  if (await empty.textContent().then((t) => t?.includes("Nothing needs a look"))) expect((await empty.boundingBox())!.height).toBeLessThan(90);
 
   // export downloads a CSV of the chosen range
   const download = page.waitForEvent("download");
