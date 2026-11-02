@@ -14,7 +14,7 @@ test("super admin dashboard: real numbers, access changes, add and delete", asyn
   await expect(page.locator(".head__sub")).toContainText("Asha.");
   await expect(page.locator("#meAvatar")).toHaveText("A");
   await expect(page.locator("body")).not.toContainText("sample data");
-  await expect(page.locator("body")).not.toContainText("Siddharth");
+  await expect(page.locator("body")).not.toContainText("Sunday night after 9 pm"); // prototype-only insight text
   await expect(page.locator("#skyTotal")).not.toHaveText("0");
   const total = (await service().from("profiles").select("id", { count: "exact", head: true })).count!;
   await expect(page.locator("#skyTotal")).toHaveText(total.toLocaleString("en-IN"));
