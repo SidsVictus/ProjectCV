@@ -25,9 +25,9 @@ export function ProjectsTable({ projects, table, owner }: {
             <tr key={p.id}>
               <td className="c-num">{String(i + 1).padStart(2, "0")}</td>
               <td className="c-name">{p.name}</td>
-              <td className="c-when">{p.timeline || "Not added"}</td>
-              <td className="c-desc"><span>{p.description || "No description yet."}</span></td>
-              <td>
+              <td className="c-when" data-label="Timeline">{p.timeline || "Not added"}</td>
+              <td className="c-desc" data-label="Description"><span>{p.description || "No description yet."}</span></td>
+              <td data-label="Documents">
                 <div className="tbl-chips">
                   {p.documents.map((d) => (
                     <a key={d.id} className="tbl-doc" href={`/d/${d.id}`} target="_blank" rel="noopener">
@@ -39,7 +39,7 @@ export function ProjectsTable({ projects, table, owner }: {
                     : p.documents.length === 0 && <span className="tbl-none">None</span>}
                 </div>
               </td>
-              <td>
+              <td data-label="Status">
                 {p.status === "done"
                   ? <span className="cv-done"><TickIcon />Completed</span>
                   : <span className="cv-wip"><ClockIcon />In progress</span>}

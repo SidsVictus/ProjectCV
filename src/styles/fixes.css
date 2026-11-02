@@ -27,3 +27,31 @@
 /* Owner request: table headings and project names swap font styles (all eight table styles). */
 .tbl:not(.tbl-mini) th { font: italic 400 24px/29px var(--font-display); letter-spacing: 0; text-transform: none; }
 .tbl:not(.tbl-mini) td.c-name { font: 700 13px/18px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; }
+
+/* Phones and small tablets: nothing cut off at the edges, every detail reachable. */
+@media (hover: none), (max-width: 980px) {
+  .wp { background-attachment: scroll; } /* fixed backgrounds are not supported on mobile browsers */
+}
+@media (max-width: 640px) {
+  /* nav: the account button stays on screen; Share shows its icon only */
+  .pcv-nav { gap: 6px; padding-right: 6px !important; }
+  .pcv-nav .pcv-seg__opt { padding: 0 12px; }
+  .pcv-nav__actions .pcv-btn--primary { font-size: 0; gap: 0; padding: 0 12px; }
+  .pcv-nav__actions .pcv-btn--primary .pcv-icon { margin: 0; }
+  /* pane: room for content; "Edit details" sits above the name instead of over it */
+  .cv-pane { padding: 24px 20px 22px; }
+  .cv-edit { position: static; margin: 0 0 14px; }
+  /* projects table: each project becomes a stacked block, every column labelled */
+  .tbl-scroll { overflow-x: visible; }
+  .tbl:not(.tbl-mini), .tbl:not(.tbl-mini) tbody, .tbl:not(.tbl-mini) tr, .tbl:not(.tbl-mini) td { display: block; width: 100%; }
+  .tbl:not(.tbl-mini) thead { display: none; }
+  .tbl:not(.tbl-mini) tr { padding: 14px 0; border-bottom: 1px solid var(--cv-line); }
+  .tbl:not(.tbl-mini) tbody tr:last-child { border-bottom: 0; }
+  .tbl:not(.tbl-mini) td { border-left: 0 !important; border-right: 0 !important; border-bottom: 0 !important; padding: 6px 0 !important; min-width: 0; }
+  .tbl:not(.tbl-mini) td.c-num { display: none; }
+  .tbl-index:not(.tbl-mini) td.c-num { display: block; }
+  .tbl:not(.tbl-mini) td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; font: italic 400 18px/22px var(--font-display); color: var(--cv-ink-faint); }
+  .tbl:not(.tbl-mini) td.c-act { text-align: left; }
+  /* setup form: one field per row */
+  .setup-grid { grid-template-columns: 1fr !important; }
+}

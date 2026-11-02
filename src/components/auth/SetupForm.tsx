@@ -41,7 +41,7 @@ export function SetupForm({ initial, editing, wallpaper, colours }: { initial: P
           <h1 style={{ margin: 0, font: "italic 300 clamp(44px, 5vw, 64px)/1 var(--font-display)", letterSpacing: "-.02em", color: "#bccf67" }}>Tell people who you are.</h1>
           <p style={{ margin: 0, maxWidth: "34em", fontSize: 17, lineHeight: "27px", color: "#a6b65b" }}>This sits at the top of your page, above your projects. You can change it any time.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "18px 16px" }}>
+        <div className="setup-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "18px 16px" }}>
           {field("full_name", <>Full name <em>required</em></>, "Your name as you want it shown", true, { maxLength: 80, autoComplete: "name" })}
           {field("headline", <>Headline <em>required</em></>, "e.g. B.Tech Data Science student", true, { maxLength: 120 })}
           {field("org", "College or organisation", "e.g. MVSR Engineering College", false, { maxLength: 120 })}
