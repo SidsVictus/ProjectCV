@@ -89,7 +89,7 @@ test("super admin dashboard: real numbers, access changes, add and delete", asyn
   await expect(page.locator("#usersTable")).not.toContainText(`${NAME}`);
   expect((await service().auth.admin.getUserById(target.id)).data.user).toBeNull();
   await a.reload();
-  await expect(a.getByRole("heading", { name: "Nothing here." })).toBeVisible();
+  await expect(a.getByRole("heading", { name: "This page went wandering." })).toBeVisible();
 
   // removed cards stay removed; the empty "Needs a look" message reads on one line
   await expect(page.locator("#feed, #heatmap")).toHaveCount(0);

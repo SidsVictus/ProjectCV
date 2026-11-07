@@ -30,7 +30,7 @@ export function rowArrival(rows: HTMLElement[]): void {
 const BURST = ["#bccf67", "#e4f0a0", "#8e9c4e", "#ffffff"];
 
 /** Small sparks fly out of an element, for the moment an action succeeds. */
-export function burst(el: HTMLElement, count = 14): void {
+export function burst(el: HTMLElement, count = 14, colors: string[] = BURST): void {
   if (prefersReducedMotion()) return;
   const r = el.getBoundingClientRect();
   const layer = document.createElement("div");
@@ -40,7 +40,7 @@ export function burst(el: HTMLElement, count = 14): void {
   const sparks = Array.from({ length: count }, (_, i) => {
     const s = document.createElement("i");
     const size = gsap.utils.random(3, 7);
-    s.style.cssText = `position:absolute;left:${-size / 2}px;top:${-size / 2}px;width:${size}px;height:${size}px;border-radius:${i % 3 ? "50%" : "2px"};background:${BURST[i % BURST.length]}`;
+    s.style.cssText = `position:absolute;left:${-size / 2}px;top:${-size / 2}px;width:${size}px;height:${size}px;border-radius:${i % 3 ? "50%" : "2px"};background:${colors[i % colors.length]}`;
     layer.appendChild(s);
     return s;
   });

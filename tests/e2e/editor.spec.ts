@@ -187,11 +187,29 @@ test("the sign in button shows it is working while the browser leaves for Google
   }).toPass({ timeout: 12_000 });
 });
 
+test("broken links and site errors show the friendly pages", async ({ page }) => {
+  // an address that matches nothing (global 404), a removed portfolio, and a broken document link: real 404s, one look
+  for (const path of ["/definitely-not-a-page", "/admin/not-a-page", "/d/not-a-uuid"]) {
+    const r = await page.goto(path);
+    expect(r?.status(), path).toBe(404);
+    await expect(page.getByRole("heading", { name: "This page went wandering." }), path).toBeVisible();
+    await expect(page.getByRole("button", { name: "Say hi to the character" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Take me to the start" })).toHaveAttribute("href", "/");
+  }
+  // poking the character makes it talk
+  await page.getByRole("button", { name: "Say hi to the character" }).click();
+  await expect(page.locator(".oops-bubble.is-on")).not.toBeEmpty();
+  // a failing page shows the error page with Try again
+  await page.goto("/trouble");
+  await expect(page.getByRole("heading", { name: "We dropped something." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+});
+
 test("unknown pages and links 404 plainly", async ({ page }) => {
   // a real 404 status, not a 200 with a "not found" message (a loading screen above this page would turn it into one)
   const missing = await page.goto("/p/nobody-here");
   expect(missing?.status()).toBe(404);
-  await expect(page.getByRole("heading", { name: "Nothing here." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This page went wandering." })).toBeVisible();
   const r = await page.request.get("/d/00000000-0000-4000-8000-000000000000");
   expect(r.status()).toBe(404);
 });
