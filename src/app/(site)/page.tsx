@@ -23,9 +23,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
         <div className="dome-card">
           <span className="dome-card__mark"><img src="/brand/logo-mark-filled.png" alt="Project CV" /></span>
           <h1 className="dome-card__title">Let your work<br />speak for you.</h1>
-          <p className="dome-card__sub">
-            {blocked && BLOCKED[blocked] ? BLOCKED[blocked] : "Add every project you have built, from code to circuits to canvas, attach the proof, and share your page with anyone."}
-          </p>
+          {blocked && BLOCKED[blocked] && <p className="dome-card__sub" role="alert">{BLOCKED[blocked]}</p>}
           <div className="dome-card__rule"><span>Sign in to continue</span></div>
           <GoogleButton variant="pill" />
           <p className="dome-card__legal"><LegalLine /></p>
