@@ -205,6 +205,31 @@ test("broken links and site errors show the friendly pages", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
+test("the sign in dome stays in place while the mouse moves", async ({ page }) => {
+  // The pointer motion drifts the dome a few pixels; it must never lose its position (it once slid off behind the panel).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const center = async () => page.locator(".dome").evaluate((el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; });
+  const before = await center();
+  await page.waitForTimeout(800); // the scripts need a moment to attach
+  for (const [x, y] of [[40, 60], [1400, 840], [300, 450], [1100, 120]]) { await page.mouse.move(x, y, { steps: 6 }); await page.waitForTimeout(250); }
+  await page.waitForTimeout(1500); // the drift eases for over a second
+  const after = await center();
+  expect(Math.abs(after.x - before.x)).toBeLessThan(40);
+  expect(Math.abs(after.y - before.y)).toBeLessThan(40);
+  expect(Math.abs(after.x - 720)).toBeLessThan(40); // still centred on the page, half behind the panel
+});
+
+test("redirects stay on this site's own address (relative), whatever address the server sees", async ({ request }) => {
+  // Behind Netlify the server sees a private per-deploy address; an absolute redirect would send people to another
+  // domain, where their session cookie does not exist.
+  const loc = async (method: "get" | "post", path: string) => (await request[method](path, { maxRedirects: 0 })).headers()["location"];
+  expect(await loc("get", "/auth/callback")).toBe("/?blocked=failed");
+  expect(await loc("get", "/auth/blocked?status=disabled")).toBe("/?blocked=disabled");
+  expect(await loc("post", "/auth/signout")).toBe("/signed-out");
+  expect(await loc("get", "/d/not-a-uuid")).toBe("/gone");
+});
+
 test("unknown pages and links 404 plainly", async ({ page }) => {
   // a real 404 status, not a 200 with a "not found" message (a loading screen above this page would turn it into one)
   const missing = await page.goto("/p/nobody-here");

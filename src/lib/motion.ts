@@ -84,6 +84,6 @@ export function signinPointerMotion(): () => void {
   return () => {
     removeEventListener("pointermove", onMove);
     document.documentElement.removeEventListener("pointerleave", onLeave);
-    gsap.set([dome, pill].filter(Boolean) as HTMLElement[], { clearProps: "transform" });
+    gsap.set([dome, pill].filter(Boolean) as HTMLElement[], { clearProps: "transform,translate" });
   };
 }

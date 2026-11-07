@@ -1,9 +1,10 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
+import { redirectTo } from "@/lib/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const to = (path: string) => NextResponse.redirect(new URL(path, request.url));
+  const to = (path: string) => redirectTo(path);
   if (!code) return to("/?blocked=failed");
   const supabase = await createClient();
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
