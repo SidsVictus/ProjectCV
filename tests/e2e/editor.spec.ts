@@ -79,9 +79,16 @@ test("projects, documents, styles, share, preview and the public page", async ({
   await expect.poll(async () => (await service().from("profiles").select("table_style,wallpaper,ink").eq("id", u.id).single()).data)
     .toEqual({ table_style: "stripe", wallpaper: "deco", ink: "#1d2a44" });
 
-  // share dialog shows the stable link
+  // share dialog shows the stable link; Copy link turns into a tick and then goes back
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: "Share" }).click();
   await expect(page.locator(".pcv-share__url")).toHaveText(`localhost:3000/p/${u.slug}`);
+  const copy = page.locator(".pcv-share__row .sb");
+  await copy.click();
+  await expect(copy).toHaveAttribute("data-state", "done");
+  await expect(copy).toContainText("Copied");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`http://localhost:3000/p/${u.slug}`);
+  await expect(copy).toHaveAttribute("data-state", "idle", { timeout: 6000 });
   await page.getByRole("button", { name: "Done" }).click();
 
   // preview: no edit controls
@@ -157,6 +164,27 @@ test("sign out lands on See you soon with a link to the public page", async ({ p
   await expect(page.locator(".cv-name")).toHaveText("Leaving Soon");
   await page.goto("/portfolio");
   await expect(page).toHaveURL(/localhost:3000\/$/);
+});
+
+test("the sign in button shows it is working while the browser leaves for Google", async ({ page }) => {
+  // Playwright holds back every page query while a navigation is pending, and the click starts one, so the
+  // page reports by itself (through an exposed function) the moment its button turns busy.
+  let sawBusy = false;
+  await page.exposeFunction("pcvSawBusy", () => { sawBusy = true; });
+  await page.addInitScript(() => {
+    new MutationObserver(() => {
+      const b = document.querySelector(".gsi-pill");
+      if (b?.classList.contains("is-busy") && b.getAttribute("aria-busy") === "true") (window as unknown as { pcvSawBusy: () => void }).pcvSawBusy();
+    }).observe(document, { subtree: true, attributes: true, childList: true });
+  });
+  await page.goto("/");
+  await page.route("**/auth/v1/authorize**", async (route) => { await new Promise((r) => setTimeout(r, 2500)); await route.fulfill({ status: 200, body: "ok" }); });
+  const button = page.getByRole("button", { name: "Sign in with Google" });
+  // the scripts may not have loaded yet, so click again until the button responds
+  await expect(async () => {
+    await button.click({ noWaitAfter: true });
+    await expect.poll(() => sawBusy, { timeout: 1500 }).toBe(true);
+  }).toPass({ timeout: 12_000 });
 });
 
 test("unknown pages and links 404 plainly", async ({ page }) => {

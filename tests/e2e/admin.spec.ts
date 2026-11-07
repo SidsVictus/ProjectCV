@@ -11,6 +11,7 @@ test("super admin dashboard: real numbers, access changes, add and delete", asyn
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/admin");
+  await expect(page.locator(".adm-ld")).toHaveCount(0, { timeout: 15_000 }); // the loading screen leaves once the sky and charts are ready
   await expect(page.locator(".head__sub")).toContainText("Asha.");
   await expect(page.locator("#meAvatar")).toHaveText("A");
   await expect(page.locator("body")).not.toContainText("sample data");

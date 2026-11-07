@@ -1,9 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { finishUpload, saveProject, startUpload } from "@/app/actions/portfolio";
+import { StateButton } from "@/components/ui/StateButton";
+import { useSpringIn } from "@/components/ui/useMotion";
 import { domainOf } from "@/lib/cv";
 import { ACCEPT, ALLOWED_MIME_TYPES, MAX_FILE_BYTES } from "@/lib/r2-rules";
+import { putFile } from "@/lib/upload";
 import { CheckPath, ClosePath, EyePath, PIcon } from "./icons";
 import type { ProjectView } from "./ProjectsTable";
 
@@ -32,6 +35,9 @@ export function ProjectDialog({ project, onClose, onSaved }: {
   const [nameErr, setNameErr] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState("");
+  const [progress, setProgress] = useState<number | null>(null); // 0 to 1 across all files; null when there is nothing to measure
+  const [saved, setSaved] = useState(false);
+  const panel = useSpringIn<HTMLDivElement>();
   const picker = useRef<HTMLInputElement>(null);
 
   function addFiles(files: FileList | null) {
@@ -60,7 +66,7 @@ export function ProjectDialog({ project, onClose, onSaved }: {
     if (inFlight.current) return;
     inFlight.current = true;
     try {
-      setMsg(""); setBusy("Saving");
+      setMsg(""); setBusy("Saving"); setProgress(null);
       const links = pending.filter((p) => p.kind === "link").map((p) => p.url!);
       const r = await saveProject({ id: savedId.current, project: d, addLinks: links, removeDocs: removed });
       if (!r.ok) { setMsg(r.error); setBusy(""); return; }
@@ -70,16 +76,18 @@ export function ProjectDialog({ project, onClose, onSaved }: {
       const files = pending.filter((p) => p.kind === "file");
       for (let i = 0; i < files.length; i++) {
         const f = files[i].file!;
-        setBusy(`Uploading ${i + 1} of ${files.length}`);
+        setBusy(`Uploading ${i + 1} of ${files.length}`); setProgress(i / files.length);
         const s = await startUpload({ projectId: r.data.id, name: f.name, mime: f.type, size: f.size });
         if (!s.ok) { setMsg(s.error); setBusy(""); onSaved(); return; }
-        await fetch(s.data.url, { method: "PUT", body: f, headers: { "Content-Type": f.type } }).catch(() => null);
+        await putFile(s.data.url, f, (x) => setProgress((i + x) / files.length));
         // The server checks the object itself; a failed PUT is found there and its pending row removed.
         const fin = await finishUpload(s.data.id);
         if (!fin.ok) { setMsg(`${f.name}: ${fin.error} Your project and other changes were saved.`); setBusy(""); onSaved(); return; }
         setPending((p) => p.filter((x) => x.key !== files[i].key)); // uploaded; a retry skips it
       }
-      onSaved(); onClose();
+      onSaved(); setBusy(""); setSaved(true); // the tick, then the dialog closes
+      await new Promise((r) => setTimeout(r, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 150 : 750));
+      onClose();
     } finally {
       inFlight.current = false;
     }
@@ -87,7 +95,7 @@ export function ProjectDialog({ project, onClose, onSaved }: {
 
   return (
     <div className="pcv-overlay"><div className="pcv-overlay__inner">
-      <div className="pcv-dialog" role="dialog" aria-modal="true" aria-labelledby="ap-title" style={{ width: "min(680px, 100%)", gap: 24 }}>
+      <div ref={panel} className="pcv-dialog" role="dialog" aria-modal="true" aria-labelledby="ap-title" style={{ width: "min(680px, 100%)", gap: 24 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
           <div style={{ flex: 1, display: "grid", gap: 4 }}>
             <h2 className="pcv-dialog__title" id="ap-title">{project ? "Edit project" : "Add a project"}</h2>
@@ -155,9 +163,12 @@ export function ProjectDialog({ project, onClose, onSaved }: {
         </div>
         {msg && <p role="alert" style={{ margin: 0, color: "var(--text)", fontSize: 14, borderLeft: "2px dashed var(--text)", paddingLeft: 10 }}>{msg}</p>}
         <div className="pcv-dialog__actions" style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
-          <span role="status" aria-live="polite" style={{ marginRight: "auto", alignSelf: "center", fontSize: 13, color: "var(--text-muted)" }}>{busy && busy + "..."}</span>
-          <button type="button" className="pcv-btn pcv-btn--secondary" onClick={onClose} disabled={!!busy}>Cancel</button>
-          <button type="button" className="pcv-btn pcv-btn--primary" onClick={save} disabled={!!busy}><PIcon d={CheckPath} />Save project</button>
+          <span role="status" aria-live="polite" style={{ marginRight: "auto", alignSelf: "center", fontSize: 13, color: "var(--text-muted)" }}>
+            {busy && busy + (progress !== null && busy.startsWith("Uploading") ? ` · ${Math.round(progress * 100)}%` : "...")}
+          </span>
+          <button type="button" className="pcv-btn pcv-btn--secondary" onClick={onClose} disabled={!!busy || saved}>Cancel</button>
+          <StateButton state={saved ? "done" : busy ? "busy" : "idle"} idle="Save project" busy={busy.startsWith("Uploading") ? "Uploading" : "Saving"} done="Saved"
+            icon={<PIcon d={CheckPath} />} progress={progress} onClick={save} />
         </div>
       </div>
     </div></div>
@@ -176,6 +187,12 @@ function DocChip({ kind, name, meta, onRemove }: { kind: "file" | "link"; name: 
 
 export function ShareDialog({ url, onClose, onPreview }: { url: string; onClose: () => void; onPreview: () => void }) {
   const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 2400); // back to "Copy link" so it can be used again
+    return () => clearTimeout(t);
+  }, [copied]);
+  const panel = useSpringIn<HTMLDivElement>();
   const shown = url.replace(/^https?:\/\//, "");
   const text = encodeURIComponent("See the projects I have built: " + url);
   async function copy() {
@@ -183,7 +200,7 @@ export function ShareDialog({ url, onClose, onPreview }: { url: string; onClose:
   }
   return (
     <div className="pcv-overlay"><div className="pcv-overlay__inner">
-      <div className="pcv-dialog" role="dialog" aria-modal="true" aria-labelledby="sh-title" style={{ width: "min(600px, 100%)" }}>
+      <div ref={panel} className="pcv-dialog" role="dialog" aria-modal="true" aria-labelledby="sh-title" style={{ width: "min(600px, 100%)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
           <div style={{ flex: 1, display: "grid", gap: 4 }}>
             <h2 className="pcv-dialog__title" id="sh-title">Share your page</h2>
@@ -194,7 +211,8 @@ export function ShareDialog({ url, onClose, onPreview }: { url: string; onClose:
         <div className="pcv-share">
           <div className="pcv-share__row">
             <span className="pcv-share__url">{shown}</span>
-            <button type="button" className="pcv-btn pcv-btn--primary pcv-btn--sm" onClick={copy}><PIcon d={<><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h8" /></>} />{copied ? "Copied" : "Copy link"}</button>
+            <StateButton className="pcv-btn pcv-btn--primary pcv-btn--sm" state={copied ? "done" : "idle"} idle="Copy link" busy="Copying" done="Copied"
+              icon={<PIcon d={<><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h8" /></>} />} onClick={copy} />
           </div>
           <div className="pcv-share__note"><PIcon d={<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>} style={{ width: 16, height: 16 }} />Anyone with this link can view. Only you can edit. The link stays the same when you add projects.</div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import {
   catalogAddColour, catalogAddTable, catalogFinishWallpaper, catalogSetHidden, catalogStartWallpaper,
@@ -10,6 +10,7 @@ import type { Catalog } from "@/lib/catalog";
 import { toPcvData, type Snapshot } from "@/lib/admin/pcvData";
 import { createClient } from "@/lib/supabase/client";
 import markup from "@/legacy/admin/markup";
+import { AdminLoading } from "./AdminLoading";
 
 declare global {
   interface Window { THREE?: typeof THREE; PCV_DATA?: unknown; PCV_API?: unknown; PCV_BOOTED?: boolean }
@@ -21,6 +22,14 @@ declare global {
  */
 export function AdminDashboard({ snapshot, catalog }: { snapshot: Snapshot; catalog: Catalog }) {
   const root = useRef<HTMLDivElement>(null);
+  // The loading screen covers the page until the scripts have drawn the sky and charts, then fades out.
+  const [ready, setReady] = useState(() => typeof window !== "undefined" && !!window.PCV_BOOTED);
+  const [gone, setGone] = useState(false);
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(() => setGone(true), 700);
+    return () => clearTimeout(t);
+  }, [ready]);
   useEffect(() => {
     if (window.PCV_BOOTED) return; // the scripts wire the DOM once per page load
     window.PCV_BOOTED = true;
@@ -47,10 +56,21 @@ export function AdminDashboard({ snapshot, catalog }: { snapshot: Snapshot; cata
       },
     };
     (async () => {
-      await import("@/legacy/admin/charts.js");
-      await import("@/legacy/admin/scenes.js");
-      await import("@/legacy/admin/app.js");
+      try {
+        await import("@/legacy/admin/charts.js");
+        await import("@/legacy/admin/scenes.js");
+        await import("@/legacy/admin/app.js");
+      } catch (e) {
+        console.error("admin dashboard scripts", e); // show whatever drew rather than keep the loading screen forever
+      } finally {
+        requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
+      }
     })();
   }, [snapshot, catalog]);
-  return <div ref={root} style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: markup }} />;
+  return (
+    <>
+      <div ref={root} style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: markup }} />
+      {!gone && <AdminLoading leaving={ready} />}
+    </>
+  );
 }

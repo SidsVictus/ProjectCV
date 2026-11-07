@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { LegalLine } from "@/components/auth/AuthScreen";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { SigninMotion } from "@/components/auth/SigninMotion";
 import { getProfile, nextPath } from "@/lib/auth";
 import "./signin.css";
 
@@ -18,6 +19,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   return (
     <main className="dome-signin" aria-label="Sign in">
       {/* The dome turns slowly on the page centre; its right half passes behind the glass panel. */}
+      <SigninMotion />
       <div className="dome" aria-hidden="true"><div className="dome__disc" /></div>
       <section className="dome-panel">
         <div className="dome-card">

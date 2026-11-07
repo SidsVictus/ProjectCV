@@ -6,17 +6,19 @@ import { createClient } from "@/lib/supabase/client";
 /** Google's official sign-in button: dark (DESIGN.md section 15), or the full width dark pill on the sign-in page. */
 export function GoogleButton({ variant = "dark" }: { variant?: "dark" | "pill" }) {
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false); // while the browser is on its way to Google
   async function signIn() {
-    setError("");
+    if (busy) return;
+    setError(""); setBusy(true);
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) setError("Google sign in is not available right now. Please try again in a moment.");
+    if (error) { setBusy(false); setError("Google sign in is not available right now. Please try again in a moment."); }
   }
   return (
     <>
-      <button type="button" className={`gsi-material-button${variant === "pill" ? " gsi-pill" : ""}`} onClick={signIn}>
+      <button type="button" className={`gsi-material-button${variant === "pill" ? " gsi-pill" : ""}${busy ? " is-busy" : ""}`} aria-busy={busy} onClick={signIn}>
         <div className="gsi-material-button-state" />
         <div className="gsi-material-button-content-wrapper">
           <div className="gsi-material-button-icon">

@@ -1,10 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveProfile } from "@/app/actions/portfolio";
 import { CvHeader } from "@/components/cv/CvHeader";
+import { TransitionLink, useGo } from "@/components/ui/PageTransition";
+import { StateButton } from "@/components/ui/StateButton";
 import { cvVars, type Colours, type ProfileFields } from "@/lib/cv";
 import { wallpaperLook, type Catalog } from "@/lib/catalog";
 
@@ -12,11 +13,12 @@ type Key = keyof ProfileFields;
 
 export function SetupForm({ initial, editing, wallpaper, catalog, colours }: { initial: ProfileFields; editing: boolean; wallpaper: string; catalog: Catalog; colours: Colours }) {
   const wall = wallpaperLook(wallpaper, catalog, "wp-box");
-  const router = useRouter();
+  const go = useGo();
   const [pd, setPd] = useState(initial);
   const [err, setErr] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
   const on = (k: Key) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setPd({ ...pd, [k]: e.target.value });
   const bad = (k: "full_name" | "headline") => (err && !pd[k].trim() ? "setup-err" : "");
 
@@ -24,7 +26,10 @@ export function SetupForm({ initial, editing, wallpaper, catalog, colours }: { i
     if (!pd.full_name.trim() || !pd.headline.trim()) { setErr(true); return; }
     setBusy(true); setMsg("");
     const r = await saveProfile(pd);
-    if (r.ok) router.replace("/portfolio"); else { setMsg(r.error); setBusy(false); }
+    if (!r.ok) { setMsg(r.error); setBusy(false); return; }
+    setSaved(true); // a tick for a moment, then on to the portfolio
+    await new Promise((res) => setTimeout(res, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 100 : 450));
+    go("/portfolio", { replace: true, from: document.querySelector(".sb") });
   }
 
   const field = (k: Key, label: React.ReactNode, ph: string, full = false, extra: Partial<React.InputHTMLAttributes<HTMLInputElement>> = {}) => (
@@ -56,8 +61,9 @@ export function SetupForm({ initial, editing, wallpaper, catalog, colours }: { i
         {err && (!pd.full_name.trim() || !pd.headline.trim()) && <p role="alert" style={{ margin: 0, color: "#bccf67", fontSize: 14 }}>Add your name and a headline to continue.</p>}
         {msg && <p role="alert" style={{ margin: 0, color: "#bccf67", fontSize: 14 }}>{msg}</p>}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button type="button" className="pcv-btn pcv-btn--primary pcv-btn--lg" onClick={save} disabled={busy}>{editing ? "Save details" : "Create my page"}</button>
-          {editing && <a className="pcv-btn pcv-btn--ghost pcv-btn--lg" href="/portfolio">Cancel</a>}
+          <StateButton className="pcv-btn pcv-btn--primary pcv-btn--lg" state={saved ? "done" : busy ? "busy" : "idle"}
+            idle={editing ? "Save details" : "Create my page"} busy="Saving" done={editing ? "Saved" : "Page created"} onClick={save} />
+          {editing && <TransitionLink className="pcv-btn pcv-btn--ghost pcv-btn--lg" href="/portfolio">Cancel</TransitionLink>}
         </div>
       </div>
       <div className={wall.className} style={{ ...wall.style, flex: "1 1 480px", minWidth: 0, minHeight: 520, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px", boxSizing: "border-box" }}>

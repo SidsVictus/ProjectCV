@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { PageStats, type Stats } from "@/components/stats/PageStats";
+import { TransitionLink } from "@/components/ui/PageTransition";
 import { cvVars, type Colours, type ProfileFields } from "@/lib/cv";
 import { wallpaperLook, type Catalog } from "@/lib/catalog";
 import { CvHeader } from "./CvHeader";
@@ -40,7 +40,7 @@ export function ViewerPage({ slug, profile, projects, style, stats, catalog, pre
           <div className="pcv-viewer pcv-glass" style={{ flexWrap: "wrap", background: "rgba(2,1,5,.62)", position: "sticky", top: 16, zIndex: 5 }}>
             <PIcon d={EyePath} style={{ color: "#bccf67" }} />
             <span className="pcv-viewer__text">You are seeing your page <strong>exactly as viewers do.</strong></span>
-            <a className="pcv-btn pcv-btn--primary pcv-btn--sm" href="/portfolio">Back to editing</a>
+            <TransitionLink className="pcv-btn pcv-btn--primary pcv-btn--sm" href="/portfolio">Back to editing</TransitionLink>
           </div>
         )}
         <div className="tool-row" style={{ margin: "36px 0 0" }}>
@@ -56,7 +56,7 @@ export function ViewerPage({ slug, profile, projects, style, stats, catalog, pre
           <div className="pcv-viewer pcv-glass" style={{ position: "sticky", bottom: 16, marginTop: 12, flexWrap: "wrap", background: "rgba(2,1,5,.62)" }}>
             <img src="/brand/logo-mark.png" alt="Project CV" style={{ width: 34, height: 34 }} />
             <span className="pcv-viewer__text"><strong>View only.</strong> Made with Project CV.</span>
-            <Link className="pcv-btn pcv-btn--primary pcv-btn--sm" href="/">Create one for yourself</Link>
+            <TransitionLink className="pcv-btn pcv-btn--primary pcv-btn--sm" href="/">Create one for yourself</TransitionLink>
           </div>
         )}
       </div>

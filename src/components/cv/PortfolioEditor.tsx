@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { deleteProject, heartbeat, saveStyle } from "@/app/actions/portfolio";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { PageStats, type Stats } from "@/components/stats/PageStats";
+import { TransitionLink, useGo } from "@/components/ui/PageTransition";
 import { DEFAULT_COLOURS, cvVars, type Colours, type ProfileFields } from "@/lib/cv";
 import { wallpaperLook, type Catalog } from "@/lib/catalog";
 import { CvHeader } from "./CvHeader";
@@ -22,6 +23,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
   slug: string; shareUrl: string; superAdmin: boolean; stats: Stats | null; catalog: Catalog;
 }) {
   const router = useRouter();
+  const go = useGo();
   const [modal, setModal] = useState<Modal>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bg, setBg] = useState(style.wallpaper);
@@ -67,7 +69,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
   const shownBg = modal === "background" ? tryBg : bg;
   const vars = cvVars(colours) as React.CSSProperties;
   const initial = (profile.full_name || "Y")[0].toUpperCase();
-  const preview = () => router.push("/portfolio/preview");
+  const preview = () => go("/portfolio/preview", { from: document.querySelector(".pcv-seg__opt[aria-pressed=\"false\"]") ?? document.querySelector(".pcv-dialog .pcv-btn--ghost") });
   const wall = wallpaperLook(shownBg, catalog);
 
   return (
@@ -86,7 +88,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
             <button type="button" className="pcv-avatar" aria-label="Account menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)} style={{ cursor: "pointer" }}>{initial}</button>
             {menuOpen && (
               <div className="pcv-glass" style={{ position: "absolute", right: 0, top: 52, minWidth: 210, padding: 8, borderRadius: 18, background: "rgba(11,11,9,.92)", display: "grid", gap: 2, animation: "satin-rise var(--satin-flow) var(--satin-glide) both" }}>
-                <a className="pcv-nav__link" href="/setup" style={{ textAlign: "left" }}>Edit my details</a>
+                <TransitionLink className="pcv-nav__link" href="/setup" style={{ textAlign: "left" }}>Edit my details</TransitionLink>
                 {/* A full page load: the admin dashboard has its own root layout and styles. */}
                 {superAdmin && <a className="pcv-nav__link" href="/admin" style={{ textAlign: "left" }}>Admin dashboard</a>}
                 <SignOutButton className="pcv-nav__link" style={{ background: "none", border: 0, textAlign: "left", cursor: "pointer" }} />
@@ -129,7 +131,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
           </div>
 
           <section className="cv-pane" style={vars} aria-label="Portfolio">
-            <a className="cv-edit" href="/setup" style={{ textDecoration: "none" }}><PencilIcon />Edit details</a>
+            <TransitionLink className="cv-edit" href="/setup" style={{ textDecoration: "none" }}><PencilIcon />Edit details</TransitionLink>
             <CvHeader profile={profile} count={projects.length} />
             <ProjectsTable projects={projects} table={table} catalog={catalog} owner={{ onEdit: (p) => setModal({ add: p }), onDelete: (p) => setModal({ del: p }) }} />
             {projects.length === 0 && <p className="cv-empty">Your first project goes here.</p>}

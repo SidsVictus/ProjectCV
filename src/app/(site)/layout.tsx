@@ -5,6 +5,8 @@ import "@/styles/bundle.css";
 import "@/styles/prototype.css";
 import "@/styles/tables.css";
 import "@/styles/fixes.css";
+import "@/styles/motion.css";
+import { PageTransitionProvider } from "@/components/ui/PageTransition";
 
 export const metadata: Metadata = {
   title: "Project CV",
@@ -22,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Google's sign-in button uses Roboto Medium, as Google's brand rules require. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet" />
-        <div className="pcv-root" style={{ minHeight: "100vh" }}>{children}</div>
+        <div className="pcv-root" style={{ minHeight: "100vh" }}><PageTransitionProvider>{children}</PageTransitionProvider></div>
       </body>
     </html>
   );

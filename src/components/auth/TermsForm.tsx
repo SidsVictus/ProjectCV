@@ -1,19 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { acceptTerms } from "@/app/actions/portfolio";
+import { useGo } from "@/components/ui/PageTransition";
+import { StateButton } from "@/components/ui/StateButton";
 import { SignOutButton } from "./SignOutButton";
 
 export function TermsForm() {
-  const router = useRouter();
+  const go = useGo();
   const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
   async function accept() {
     setBusy(true); setError("");
     const r = await acceptTerms();
-    if (r.ok) router.replace("/setup"); else { setError(r.error); setBusy(false); }
+    if (!r.ok) { setError(r.error); setBusy(false); return; }
+    setAccepted(true);
+    await new Promise((res) => setTimeout(res, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 100 : 450));
+    go("/setup", { replace: true, from: document.querySelector(".sb") });
   }
   return (
     <>
@@ -23,7 +28,7 @@ export function TermsForm() {
       </label>
       {error && <p role="alert" style={{ margin: 0, color: "#bccf67", fontSize: 14 }}>{error}</p>}
       <div className="pcv-auth__actions">
-        <button type="button" className="pcv-btn pcv-btn--primary" disabled={!agreed || busy} onClick={accept}>Accept and continue</button>
+        <StateButton state={accepted ? "done" : busy ? "busy" : "idle"} idle="Accept and continue" busy="Accepting" done="Accepted" disabled={!agreed} onClick={accept} />
         <SignOutButton className="pcv-btn pcv-btn--ghost" label="Cancel" />
       </div>
     </>

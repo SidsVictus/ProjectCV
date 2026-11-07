@@ -1,3 +1,7 @@
+"use client";
+
+import { useLayoutEffect, useRef } from "react";
+import { rowArrival } from "@/lib/motion";
 import { tableLook, type Catalog } from "@/lib/catalog";
 import { ClockIcon, FileIcon, LinkIcon, PencilIcon, TickIcon, TrashIcon } from "./icons";
 
@@ -12,6 +16,15 @@ export function ProjectsTable({ projects, table, catalog, owner }: {
   owner?: { onEdit: (p: ProjectView) => void; onDelete: (p: ProjectView) => void };
 }) {
   const look = tableLook(table, catalog);
+  // After the first paint, rows that were not there before drop in and glow (a saved project, not a page load).
+  const body = useRef<HTMLTableSectionElement>(null);
+  const seen = useRef<Set<string> | null>(null);
+  useLayoutEffect(() => {
+    const prev = seen.current;
+    seen.current = new Set(projects.map((p) => p.id));
+    if (!prev || !body.current) return;
+    rowArrival(Array.from(body.current.querySelectorAll<HTMLElement>("tr[data-id]")).filter((r) => !prev.has(r.dataset.id!)));
+  }, [projects]);
   return (
     <div className="tbl-scroll">
       <table className={`tbl tbl-${look.base}`} style={look.style}>
@@ -22,9 +35,9 @@ export function ProjectsTable({ projects, table, catalog, owner }: {
             {owner && <th className="c-act"><span className="pcv-sr">Actions</span></th>}
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={body}>
           {projects.map((p, i) => (
-            <tr key={p.id}>
+            <tr key={p.id} data-id={p.id}>
               <td className="c-num">{String(i + 1).padStart(2, "0")}</td>
               <td className="c-name">{p.name}</td>
               <td className="c-when" data-label="Timeline">{p.timeline || "Not added"}</td>
