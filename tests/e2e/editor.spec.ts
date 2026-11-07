@@ -188,7 +188,9 @@ test("the sign in button shows it is working while the browser leaves for Google
 });
 
 test("unknown pages and links 404 plainly", async ({ page }) => {
-  await page.goto("/p/nobody-here");
+  // a real 404 status, not a 200 with a "not found" message (a loading screen above this page would turn it into one)
+  const missing = await page.goto("/p/nobody-here");
+  expect(missing?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Nothing here." })).toBeVisible();
   const r = await page.request.get("/d/00000000-0000-4000-8000-000000000000");
   expect(r.status()).toBe(404);
