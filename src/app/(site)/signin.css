@@ -7,20 +7,15 @@
   color: var(--gold-deep);
 }
 
-/* The photo shows the dome's left half; the disc pairs it with its mirror image to make a whole dome. */
+/* The whole dome with its grey lattice ring, made from the photo (the ring repeats every 30 degrees). */
 .dome {
-  --r: max(50vh, 36vw);
+  --r: max(60vh, 43vw);
   position: absolute; left: 50%; top: 50%; width: calc(var(--r) * 2); height: calc(var(--r) * 2);
   translate: -50% -50%; border-radius: 50%; overflow: hidden;
   box-shadow: 0 0 0 1px rgba(109, 76, 28, .25), 0 40px 120px -20px rgba(70, 45, 10, .55);
 }
 .dome__disc { position: absolute; inset: 0; animation: dome-turn 180s linear infinite; will-change: transform; }
-.dome__disc::before, .dome__disc::after {
-  content: ""; position: absolute; top: 0; bottom: 0; width: 50%;
-  background: url("/brand/dome.jpg") right center / auto 100% no-repeat;
-}
-.dome__disc::before { left: 0; }
-.dome__disc::after { right: 0; transform: scaleX(-1); }
+.dome__disc::before { content: ""; position: absolute; inset: 0; background: url("/brand/dome.webp") center / cover no-repeat; }
 @keyframes dome-turn { to { transform: rotate(360deg); } }
 
 /* Right half: the auth box itself, solid, covering the dome's other half */
@@ -51,7 +46,7 @@
 
 /* Phones and narrow screens: dome on top, card below it over the dome's lower half */
 @media (max-width: 860px) {
-  .dome { --r: 62vw; top: 26vh; }
+  .dome { --r: 60vw; top: 24vh; }
   .dome-panel { inset: 26vh 0 0 0; place-items: start center; padding: 32px 20px 36px; border-radius: 28px 28px 0 0; box-shadow: 0 -24px 60px -30px rgba(90, 60, 15, .45); }
   .dome-signin { min-height: max(100dvh, 780px); }
 }
