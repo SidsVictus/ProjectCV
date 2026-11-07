@@ -27,7 +27,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
             {blocked && BLOCKED[blocked] ? BLOCKED[blocked] : "Add every project you have built, from code to circuits to canvas, attach the proof, and share your page with anyone."}
           </p>
           <div className="dome-card__rule"><span>Sign in to continue</span></div>
-          <GoogleButton variant="light" />
+          <GoogleButton variant="pill" />
           <p className="dome-card__legal"><LegalLine /></p>
         </div>
       </section>

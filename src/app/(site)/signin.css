@@ -43,12 +43,11 @@
 .dome-card__legal a { color: var(--gold-deep); }
 .dome-card [role="alert"] { color: #8a3b12 !important; }
 
-/* Google's official light theme button (white, #747775 border, #1f1f1f text), full width */
-.gsi-material-button.gsi-light { background: #ffffff; border: 1px solid #747775; color: #1f1f1f; width: 100%; max-width: none; height: 48px; }
-.gsi-material-button.gsi-light .gsi-material-button-contents { color: #1f1f1f; }
-.gsi-material-button.gsi-light .gsi-material-button-content-wrapper { justify-content: center; }
-.gsi-material-button.gsi-light .gsi-material-button-contents { flex-grow: 0; }
-.gsi-material-button.gsi-light:hover .gsi-material-button-state { background: #303030; opacity: 8%; }
+/* Google's dark theme (fill #131314, stroke #8e918f, text #e3e3e3) in the pill shape Google allows, full width */
+.gsi-material-button.gsi-pill { background: #131314; border: 1px solid #8e918f; color: #e3e3e3; border-radius: 999px; width: 100%; max-width: none; height: 48px; }
+.gsi-material-button.gsi-pill .gsi-material-button-contents { color: #e3e3e3; flex-grow: 0; }
+.gsi-material-button.gsi-pill .gsi-material-button-content-wrapper { justify-content: center; }
+.gsi-material-button.gsi-pill:hover .gsi-material-button-state { background: #ffffff; opacity: 8%; }
 
 /* Phones and narrow screens: dome on top, card below it over the dome's lower half */
 @media (max-width: 860px) {
