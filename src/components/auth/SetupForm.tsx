@@ -38,11 +38,7 @@ export function SetupForm({ initial, editing, wallpaper, catalog, colours }: { i
     <div style={{ minHeight: "100vh", background: "#020105", display: "flex", flexWrap: "wrap" }}>
       <div className="screen-in" style={{ flex: "1 1 520px", minWidth: 0, boxSizing: "border-box", padding: "40px clamp(24px, 5vw, 72px) 56px", display: "flex", flexDirection: "column", gap: 28 }}>
         <img src="/brand/logo-mark.png" alt="Project CV" style={{ width: 52, height: 52 }} />
-        <div style={{ display: "grid", gap: 10 }}>
-          <p style={{ margin: 0, font: "600 12px/16px var(--font-sans)", letterSpacing: ".16em", textTransform: "uppercase", color: "#727d40" }}>{editing ? "Your details" : "Almost there · About you"}</p>
-          <h1 style={{ margin: 0, font: "italic 300 clamp(44px, 5vw, 64px)/1 var(--font-display)", letterSpacing: "-.02em", color: "#bccf67" }}>Tell people who you are.</h1>
-          <p style={{ margin: 0, maxWidth: "34em", fontSize: 17, lineHeight: "27px", color: "#a6b65b" }}>This sits at the top of your page, above your projects. You can change it any time.</p>
-        </div>
+        <h1 style={{ margin: 0, font: "600 12px/16px var(--font-sans)", letterSpacing: ".16em", textTransform: "uppercase", color: "#727d40" }}>{editing ? "Your details" : "Almost there · About you"}</h1>
         <div className="setup-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "18px 16px" }}>
           {field("full_name", <>Full name <em>required</em></>, "Your name as you want it shown", true, { maxLength: 80, autoComplete: "name" })}
           {field("headline", <>Headline <em>required</em></>, "e.g. B.Tech Data Science student", true, { maxLength: 120 })}

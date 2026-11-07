@@ -13,7 +13,7 @@ test("first sign in: terms, setup with validation, empty portfolio", async ({ pa
   await accept.click();
 
   await expect(page).toHaveURL(/\/setup$/);
-  await expect(page.getByRole("heading", { name: "Tell people who you are." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Almost there · About you" })).toBeVisible();
   await page.getByRole("button", { name: "Create my page" }).click();
   await expect(page.getByText("Add your name and a headline to continue.")).toBeVisible();
   await page.getByPlaceholder("Your name as you want it shown").fill("Kavya Menon");
