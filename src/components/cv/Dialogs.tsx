@@ -143,7 +143,7 @@ export function ProjectDialog({ project, onClose, onSaved }: {
                 style={{ display: "grid", justifyItems: "center", gap: 8, padding: 32, borderRadius: 14, border: "1px dashed var(--border-control)", background: "var(--surface-inset)", textAlign: "center", cursor: "pointer", font: "inherit", color: "inherit" }}>
                 <PIcon d={UploadPath} style={{ width: 28, height: 28, color: "var(--text)" }} />
                 <span style={{ color: "var(--text)", fontWeight: 600 }}>Drop a file here or browse</span>
-                <span style={{ color: "var(--text-muted)", fontSize: 12 }}>PDF, images, slides or video. Up to 100 MB each, 1 GB in total.</span>
+                <span style={{ color: "var(--text-muted)", fontSize: 12 }}>PDF, images, slides or video.</span>
               </button>
             </>
           ) : (
