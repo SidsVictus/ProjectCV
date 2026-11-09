@@ -11,12 +11,13 @@ export const TABLES = [
   { id: "blueprint", name: "Blueprint", desc: "Dashed rules on a dotted drafting grid." },
 ] as const;
 
-export const DEFAULT_COLOURS = { ink: "#141414", glass: "#ffffff", line: "#8a8a8a" };
+/** pane: how solid the glass is, 0.30 to 1. The standard for every colour until the owner moves the slider. */
+export const DEFAULT_COLOURS = { ink: "#141414", glass: "#ffffff", line: "#8a8a8a", pane: 0.8 };
 
 export type TableId = (typeof TABLES)[number]["id"];
-export type Colours = { ink: string; glass: string; line: string };
+export type Colours = { ink: string; glass: string; line: string; pane: number };
 
-const READ = { targets: [7, 4.5], tiers: [1, 0.96, 0.93], minPane: 0.5, maxPane: 0.9 };
+const TIERS = [1, 0.96, 0.93];
 
 export function hexRgb(h: string): [number, number, number] {
   let s = String(h || "#000000").replace("#", "");
@@ -42,35 +43,16 @@ export function contrast(a: number[], b: number[]): number {
 
 export const lum = (h: string) => luminance(hexRgb(h));
 
-/**
- * Readability rule (DESIGN.md section 14): the lowest pane opacity at which every text tier reaches
- * 7:1 (falling back to 4.5:1) even over a pure black or pure white wallpaper. Null when none can.
- */
-export function paneAlpha(ink: string, glass: string): number | null {
-  const mix = (a: number[], b: number[], t: number) => a.map((v, i) => v * t + b[i] * (1 - t));
-  const I = hexRgb(ink), G = hexRgb(glass);
-  for (const target of READ.targets) {
-    for (let a = READ.minPane; a <= READ.maxPane + 1e-9; a += 0.02) {
-      const ok = [[0, 0, 0], [255, 255, 255]].every((w) => {
-        const bg = mix(G, w, a);
-        return READ.tiers.every((t) => contrast(mix(I, bg, t), bg) >= target);
-      });
-      if (ok) return +a.toFixed(2);
-    }
-  }
-  return null;
-}
-
-/** The --cv-* variables for the pane, from the owner's three colours. */
-export function cvVars({ ink, glass, line }: Colours): Record<string, string> {
+/** The --cv-* variables for the pane, from the owner's colours and chosen glass opacity. */
+export function cvVars({ ink, glass, line, pane }: Colours): Record<string, string> {
   const darkInk = lum(ink) < 0.4;
-  const a = paneAlpha(ink, glass);
+  const a = Math.min(1, Math.max(0.3, Number.isFinite(pane) ? pane : DEFAULT_COLOURS.pane));
   return {
     "--cv-ink": ink,
-    "--cv-ink-soft": rgba(ink, READ.tiers[1]),
-    "--cv-ink-faint": rgba(ink, READ.tiers[2]),
+    "--cv-ink-soft": rgba(ink, TIERS[1]),
+    "--cv-ink-faint": rgba(ink, TIERS[2]),
     "--cv-line": rgba(line, 0.9),
-    "--cv-pane": rgba(glass, a === null ? READ.maxPane : a),
+    "--cv-pane": rgba(glass, a),
     "--cv-tint": rgba(ink, 0.06),
     "--cv-sheen": darkInk ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.04)",
     "--cv-on-ink": darkInk ? "#ffffff" : "#111111",

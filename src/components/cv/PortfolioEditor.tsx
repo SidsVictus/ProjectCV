@@ -29,7 +29,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
   const [bg, setBg] = useState(style.wallpaper);
   const [tryBg, setTryBg] = useState(style.wallpaper);
   const [table, setTable] = useState(style.table);
-  const [colours, setColours] = useState<Colours>({ ink: style.ink, glass: style.glass, line: style.line });
+  const [colours, setColours] = useState<Colours>({ ink: style.ink, glass: style.glass, line: style.line, pane: style.pane });
   const [savedColours, setSavedColours] = useState(colours);
   const [pulse, setPulse] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -44,7 +44,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
     return () => clearInterval(t);
   }, []);
 
-  async function persist(patch: Record<string, string>) {
+  async function persist(patch: Record<string, string | number>) {
     const r = await saveStyle(patch);
     if (!r.ok) setNotice(r.error);
   }
@@ -55,7 +55,7 @@ export function PortfolioEditor({ profile, style, projects, slug, shareUrl, supe
   function applyTable(id: string) { setTable(id); setModal(null); if (id !== table) persist({ table_style: id }); }
   function closeColours() {
     setModal(null);
-    if (colours.ink !== savedColours.ink || colours.glass !== savedColours.glass || colours.line !== savedColours.line) {
+    if (colours.ink !== savedColours.ink || colours.glass !== savedColours.glass || colours.line !== savedColours.line || colours.pane !== savedColours.pane) {
       setSavedColours(colours); persist(colours);
     }
   }

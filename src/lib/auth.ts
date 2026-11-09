@@ -7,7 +7,7 @@ export type Profile = {
   id: string; email: string; role: "super_admin" | "editor" | "viewer"; status: "active" | "on_hold" | "disabled";
   terms_accepted_at: string | null; full_name: string; headline: string; org: string; grad_year: string;
   location: string; about: string; linkedin: string; github: string; website: string; slug: string | null;
-  wallpaper: string; table_style: string; ink: string; glass: string; line: string;
+  wallpaper: string; table_style: string; ink: string; glass: string; line: string; pane: number;
 };
 
 export async function getProfile(): Promise<Profile | null> {

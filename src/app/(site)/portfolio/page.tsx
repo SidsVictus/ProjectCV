@@ -12,6 +12,6 @@ export default async function Portfolio() {
   return (
     <PortfolioEditor profile={profileFields(p)} projects={projects} slug={slug} stats={stats} catalog={catalog}
       shareUrl={`${origin}/p/${slug}`} superAdmin={p.role === "super_admin"}
-      style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line }} />
+      style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line, pane: Number(p.pane ?? 0.8) }} />
   );
 }

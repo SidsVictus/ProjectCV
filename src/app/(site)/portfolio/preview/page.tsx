@@ -9,5 +9,5 @@ export default async function Preview() {
   const p = await requireProfile(["/portfolio"]);
   const [projects, stats, catalog] = await Promise.all([ownerProjects(p.id), pageStats(p.slug!), getCatalog()]);
   return <ViewerPage previewing slug={p.slug!} profile={profileFields(p)} projects={projects} stats={stats} catalog={catalog}
-    style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line }} />;
+    style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line, pane: Number(p.pane ?? 0.8) }} />;
 }

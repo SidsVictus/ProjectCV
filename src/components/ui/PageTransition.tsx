@@ -28,8 +28,8 @@ function arrived(path: () => string, start: string, limit = 9000): Promise<void>
 }
 
 /**
- * Screen to screen, the page does not swap: the dome irises shut from where you clicked, the next
- * screen loads out of sight behind it, then the dome opens from the centre. The overlay is the only
+ * Screen to screen, the page does not swap: a night aperture irises shut from where you clicked, the next
+ * screen loads out of sight behind it, then it opens from the centre. The overlay is the only
  * thing on screen while the next page loads, so no skeleton or spinner is ever seen on these moves.
  */
 export function PageTransitionProvider({ children }: { children: ReactNode }) {
@@ -40,14 +40,6 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
   const dome = useRef<HTMLDivElement>(null);
   useEffect(() => { pathRef.current = pathname; }, [pathname]);
-
-  // Warm the transition picture once the page is idle, unless the visitor is saving data.
-  useEffect(() => {
-    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    if (conn?.saveData || /2g/.test(conn?.effectiveType ?? "")) return;
-    const t = setTimeout(() => { new Image().src = "/brand/dome-t.webp"; }, 2500);
-    return () => clearTimeout(t);
-  }, []);
 
   const go = useCallback<Go>(async (href, opts = {}) => {
     const move = () => (opts.replace ? router.replace(href) : router.push(href));
@@ -61,14 +53,14 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
       const x = r ? r.left + r.width / 2 : innerWidth / 2, y = r ? r.top + r.height / 2 : innerHeight / 2;
       const cx = innerWidth / 2, cy = innerHeight / 2;
 
-      // 1. close: the dome grows out of the click until it fills the screen
+      // 1. close: the aperture grows out of the click until it fills the screen
       el.dataset.mode = "cover"; el.dataset.state = "on";
       gsap.set(el, { "--x": `${x}px`, "--y": `${y}px`, "--r": "0px" });
       gsap.set(".pt__ring", { opacity: 1 });
       gsap.fromTo(dome.current, { rotation: -24, scale: 1.2 }, { rotation: 10, scale: 1, duration: 2.6, ease: "power2.out" });
       await tween(el, { "--r": `${farthest(x, y)}px`, duration: 0.8, ease: "power3.inOut" });
 
-      // 2. go: the next screen loads behind the dome
+      // 2. go: the next screen loads behind it
       const start = pathRef.current;
       move();
       await arrived(() => pathRef.current, start);
@@ -89,7 +81,22 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
     <GoContext.Provider value={go}>
       {children}
       <div ref={root} className="pt-root" data-state="idle" aria-hidden="true">
-        <div className="pt"><div ref={dome} className="pt__dome" /></div>
+        <div className="pt">
+          {/* drawn here, no picture: turning rings around a card mark that draws itself */}
+          <div ref={dome} className="pt__art">
+            <svg viewBox="0 0 400 400">
+              <circle className="pt__glow" cx="200" cy="200" r="150" />
+              <circle className="pt__orbit pt__orbit--a" cx="200" cy="200" r="178" />
+              <circle className="pt__orbit pt__orbit--b" cx="200" cy="200" r="140" />
+              <circle className="pt__orbit pt__orbit--c" cx="200" cy="200" r="104" />
+              <g className="pt__mark">
+                <rect x="160" y="160" width="74" height="96" rx="16" transform="rotate(-10 197 208)" />
+                <rect x="170" y="150" width="74" height="96" rx="16" />
+                <path d="M216 150 v34 l9 -7 l9 7 v-34" />
+              </g>
+            </svg>
+          </div>
+        </div>
         <div className="pt__ring" />
       </div>
     </GoContext.Provider>

@@ -52,38 +52,3 @@ export function burst(el: HTMLElement, count = 14, colors: string[] = BURST): vo
     }, 0)
     .to(sparks, { opacity: 0, scale: 0.2, duration: 0.45, ease: "power1.in" }, 0.4);
 }
-
-/**
- * Sign-in page: the dome drifts against the cursor for depth, and the Google button leans toward the
- * pointer when it comes close. Mouse only; returns a clean up.
- */
-export function signinPointerMotion(): () => void {
-  if (prefersReducedMotion() || !hasFinePointer()) return () => {};
-  const dome = document.querySelector<HTMLElement>(".dome");
-  const pill = document.querySelector<HTMLElement>(".gsi-pill");
-  const domeX = dome && gsap.quickTo(dome, "x", { duration: 1.2, ease: "power3.out" });
-  const domeY = dome && gsap.quickTo(dome, "y", { duration: 1.2, ease: "power3.out" });
-  const pillX = pill && gsap.quickTo(pill, "x", { duration: 0.45, ease: "power3.out" });
-  const pillY = pill && gsap.quickTo(pill, "y", { duration: 0.45, ease: "power3.out" });
-  const onMove = (e: PointerEvent) => {
-    domeX?.(-(e.clientX / innerWidth - 0.5) * 30);
-    domeY?.(-(e.clientY / innerHeight - 0.5) * 22);
-    if (pill && pillX && pillY) {
-      const r = pill.getBoundingClientRect();
-      const cx = r.left + r.width / 2 - (gsap.getProperty(pill, "x") as number);
-      const cy = r.top + r.height / 2 - (gsap.getProperty(pill, "y") as number);
-      const dx = e.clientX - cx, dy = e.clientY - cy;
-      const near = Math.abs(dx) < r.width / 2 + 70 && Math.abs(dy) < r.height / 2 + 70;
-      pillX(near ? gsap.utils.clamp(-10, 10, dx * 0.06) : 0);
-      pillY(near ? gsap.utils.clamp(-6, 6, dy * 0.2) : 0);
-    }
-  };
-  const onLeave = () => { domeX?.(0); domeY?.(0); pillX?.(0); pillY?.(0); };
-  addEventListener("pointermove", onMove, { passive: true });
-  document.documentElement.addEventListener("pointerleave", onLeave);
-  return () => {
-    removeEventListener("pointermove", onMove);
-    document.documentElement.removeEventListener("pointerleave", onLeave);
-    gsap.set([dome, pill].filter(Boolean) as HTMLElement[], { clearProps: "transform,translate" });
-  };
-}

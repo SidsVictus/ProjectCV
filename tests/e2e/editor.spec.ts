@@ -75,9 +75,11 @@ test("projects, documents, styles, share, preview and the public page", async ({
   // colours, saved on Done
   await page.getByRole("button", { name: "Edit Colors" }).click();
   await page.getByRole("radio", { name: "Midnight" }).click();
+  await page.getByLabel("Glass transparency").fill("40"); // 40% see-through, so the glass is 60% solid
+  await expect(page.locator(".cv-pane")).toHaveCSS("background-color", /0\.6\)$/);
   await page.getByRole("button", { name: "Done" }).click();
-  await expect.poll(async () => (await service().from("profiles").select("table_style,wallpaper,ink").eq("id", u.id).single()).data)
-    .toEqual({ table_style: "stripe", wallpaper: "deco", ink: "#1d2a44" });
+  await expect.poll(async () => (await service().from("profiles").select("table_style,wallpaper,ink,pane").eq("id", u.id).single()).data)
+    .toEqual({ table_style: "stripe", wallpaper: "deco", ink: "#1d2a44", pane: 0.6 });
 
   // share dialog shows the stable link; Copy link turns into a tick and then goes back
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);

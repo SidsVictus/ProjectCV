@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cvVars, paneAlpha, type Colours } from "@/lib/cv";
+import { contrast, cvVars, hexRgb, type Colours } from "@/lib/cv";
 import { offered, tableLook, wallpaperLook, type Catalog } from "@/lib/catalog";
 import { CheckPath, ClosePath, FileIcon, PIcon } from "./icons";
 import type { ProjectView } from "./ProjectsTable";
@@ -153,7 +153,7 @@ export function WallpaperPicker({ current, catalog, onTry, onApply, onCancel }: 
   );
 }
 
-const ROWS: { key: keyof Colours; label: string; delay: number }[] = [
+const ROWS: { key: "ink" | "glass" | "line"; label: string; delay: number }[] = [
   { key: "ink", label: "Text", delay: 0 }, { key: "glass", label: "Glass pane", delay: 120 }, { key: "line", label: "Lines and grid", delay: 240 },
 ];
 
@@ -161,7 +161,8 @@ const ROWS: { key: keyof Colours; label: string; delay: number }[] = [
 export function ColourPanel({ colours, catalog, onChange, onReset, onDone }: {
   colours: Colours; catalog: Catalog; onChange: (c: Colours) => void; onReset: () => void; onDone: () => void;
 }) {
-  const tip = paneAlpha(colours.ink, colours.glass) === null;
+  const tip = contrast(hexRgb(colours.ink), hexRgb(colours.glass)) < 3;
+  const clear = Math.round((1 - colours.pane) * 100); // shown as transparency: 0% is solid glass
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="co-title">
       <button type="button" aria-label="Close Edit Colors" onClick={onDone} style={{ position: "fixed", inset: 0, zIndex: 21, border: 0, padding: 0, background: "transparent", cursor: "default" }} />
@@ -193,6 +194,12 @@ export function ColourPanel({ colours, catalog, onChange, onReset, onDone }: {
             </div>
           );
         })}
+        <div className="palette-row">
+          <div className="palette-title"><b>Transparency</b><span>{clear}%</span></div>
+          <input className="pane-slider" type="range" min={0} max={70} step={1} value={clear} aria-label="Glass transparency"
+            onChange={(e) => onChange({ ...colours, pane: 1 - Number(e.target.value) / 100 })}
+            style={{ "--fill": `${(clear / 70) * 100}%` } as React.CSSProperties} />
+        </div>
         {tip && <p className="palette-tip">Your text and glass colours are too close to read comfortably. Pick a text colour that is much darker or much lighter than the glass.</p>}
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
           <button type="button" className="pcv-btn pcv-btn--ghost pcv-btn--sm" onClick={onReset}>Reset to default</button>

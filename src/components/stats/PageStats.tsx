@@ -128,9 +128,9 @@ function WhoSawCard({ title, owner, range, setRange, stats, ink }: {
             <div key={f[0]} className="file"><span>{f[0]}</span><b>{f[1]} opens</b><span className="track"><i style={{ width: widths ? `${(f[1] / max) * 100}%` : 0 }} /></span></div>
           ))}
         </div>
-      ) : (
+      ) : owner ? (
         <p className="foot" style={{ marginTop: 6 }}>Attach a certificate or report to a project and you will see how often people open it.</p>
-      )}
+      ) : null}
       {owner && <p className="foot">Your own visits are not counted.</p>}
     </section>
   );

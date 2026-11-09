@@ -79,10 +79,14 @@ export function ProjectDialog({ project, onClose, onSaved }: {
         setBusy(`Uploading ${i + 1} of ${files.length}`); setProgress(i / files.length);
         const s = await startUpload({ projectId: r.data.id, name: f.name, mime: f.type, size: f.size });
         if (!s.ok) { setMsg(s.error); setBusy(""); onSaved(); return; }
-        await putFile(s.data.url, f, (x) => setProgress((i + x) / files.length));
+        const landed = await putFile(s.data.url, f, (x) => setProgress((i + x) / files.length));
         // The server checks the object itself; a failed PUT is found there and its pending row removed.
         const fin = await finishUpload(s.data.id);
-        if (!fin.ok) { setMsg(`${f.name}: ${fin.error} Your project and other changes were saved.`); setBusy(""); onSaved(); return; }
+        if (!fin.ok) {
+          setMsg(landed ? `${f.name}: ${fin.error} Your project and other changes were saved.`
+            : `${f.name} could not be uploaded right now. Your project and other changes were saved. Please try the file again in a moment.`);
+          setBusy(""); onSaved(); return;
+        }
         setPending((p) => p.filter((x) => x.key !== files[i].key)); // uploaded; a retry skips it
       }
       onSaved(); setBusy(""); setSaved(true); // the tick, then the dialog closes
@@ -126,7 +130,7 @@ export function ProjectDialog({ project, onClose, onSaved }: {
           </div>
         </div>
         <div className="pcv-field" style={{ gap: 12 }}>
-          <span className="pcv-field__label">Documents and certificates</span>
+          <span className="pcv-field__label">Documents and certificates <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>(up to 100 MB per file, 1 GB in total)</span></span>
           <div className="pcv-seg" role="group" aria-label="How to attach" style={{ justifySelf: "start" }}>
             <button type="button" className="pcv-seg__opt" aria-pressed={mode === "upload"} onClick={() => setMode("upload")}><PIcon d={UploadPath} />Upload a file</button>
             <button type="button" className="pcv-seg__opt" aria-pressed={mode === "link"} onClick={() => setMode("link")}><PIcon d={LinkPaths} />Paste a link</button>
@@ -163,11 +167,8 @@ export function ProjectDialog({ project, onClose, onSaved }: {
         </div>
         {msg && <p role="alert" style={{ margin: 0, color: "var(--text)", fontSize: 14, borderLeft: "2px dashed var(--text)", paddingLeft: 10 }}>{msg}</p>}
         <div className="pcv-dialog__actions" style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
-          <span role="status" aria-live="polite" style={{ marginRight: "auto", alignSelf: "center", fontSize: 13, color: "var(--text-muted)" }}>
-            {busy && busy + (progress !== null && busy.startsWith("Uploading") ? ` · ${Math.round(progress * 100)}%` : "...")}
-          </span>
           <button type="button" className="pcv-btn pcv-btn--secondary" onClick={onClose} disabled={!!busy || saved}>Cancel</button>
-          <StateButton state={saved ? "done" : busy ? "busy" : "idle"} idle="Save project" busy={busy.startsWith("Uploading") ? "Uploading" : "Saving"} done="Saved"
+          <StateButton state={saved ? "done" : busy ? "busy" : "idle"} idle="Save project" busy={busy.startsWith("Uploading") && progress !== null ? `Uploading ${Math.round(progress * 100)}%` : "Saving"} done="Saved"
             icon={<PIcon d={CheckPath} />} progress={progress} onClick={save} />
         </div>
       </div>
@@ -228,7 +229,6 @@ export function ShareDialog({ url, onClose, onPreview }: { url: string; onClose:
           <button type="button" className="pcv-btn pcv-btn--ghost" onClick={onPreview}><PIcon d={EyePath} />Open as a viewer</button>
           <button type="button" className="pcv-btn pcv-btn--primary" onClick={onClose}>Done</button>
         </div>
-        {copied && <div style={{ display: "flex", justifyContent: "center" }}><span className="pcv-toast" role="status" style={{ animation: "satin-rise var(--satin-flow) var(--satin-ripple) both" }}><PIcon d={CheckPath} />Link copied</span></div>}
       </div>
     </div></div>
   );

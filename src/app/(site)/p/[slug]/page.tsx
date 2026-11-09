@@ -27,5 +27,5 @@ export default async function PublicPage({ params }: Props) {
   }
   const p = pf.profile;
   return <ViewerPage slug={slug} profile={profileFields(p)} projects={pf.projects} stats={await pageStats(slug)} catalog={await getCatalog()} isOwner={pf.is_owner}
-    style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line }} />;
+    style={{ wallpaper: p.wallpaper, table: p.table_style, ink: p.ink, glass: p.glass, line: p.line, pane: Number(p.pane ?? 0.8) }} />;
 }

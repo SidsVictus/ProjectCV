@@ -23,6 +23,7 @@ export const styleSchema = z.object({
   ink: hex.optional(),
   glass: hex.optional(),
   line: hex.optional(),
+  pane: z.number().min(0.3).max(1).transform((n) => Math.round(n * 100) / 100).optional(),
 });
 
 export const projectSchema = z.object({

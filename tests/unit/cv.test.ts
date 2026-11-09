@@ -1,28 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { contrast, cvVars, domainOf, hexRgb, paneAlpha, profileView } from "@/lib/cv";
+import { cvVars, domainOf, profileView } from "@/lib/cv";
 import { groupColleges, toPcvData, type Snapshot } from "@/lib/admin/pcvData";
 import type { Catalog } from "@/lib/catalog";
 import { linkSchema, profileSchema, styleSchema, uploadSchema } from "@/lib/validation";
 
 const blank = { full_name: "", headline: "", org: "", grad_year: "", location: "", about: "", linkedin: "", github: "", website: "" };
 
-describe("readability rule", () => {
-  it("defaults reach 7:1 at the design's 66% opacity", () => {
-    expect(paneAlpha("#141414", "#ffffff")).toBe(0.66);
+describe("glass pane", () => {
+  it("uses the owner's chosen opacity, the same whatever the colours", () => {
+    expect(cvVars({ ink: "#141414", glass: "#ffffff", line: "#8a8a8a", pane: 0.8 })["--cv-pane"]).toBe("rgba(255, 255, 255, 0.8)");
+    expect(cvVars({ ink: "#ffffff", glass: "#f4ecdc", line: "#8a8a8a", pane: 0.8 })["--cv-pane"]).toBe("rgba(244, 236, 220, 0.8)");
+    expect(cvVars({ ink: "#1d2a44", glass: "#e9dcc4", line: "#8a8a8a", pane: 0.45 })["--cv-pane"]).toBe("rgba(233, 220, 196, 0.45)");
   });
-  it("every text tier on the chosen pane reaches 7:1 over black and white wallpapers", () => {
-    const a = paneAlpha("#1d2a44", "#e9dcc4")!;
-    for (const wall of [[0, 0, 0], [255, 255, 255]]) {
-      const bg = hexRgb("#e9dcc4").map((v, i) => v * a + wall[i] * (1 - a));
-      expect(contrast(hexRgb("#1d2a44"), bg)).toBeGreaterThanOrEqual(7);
-    }
-  });
-  it("returns null when text and glass are too close, and the pane falls back to 90%", () => {
-    expect(paneAlpha("#ffffff", "#f4ecdc")).toBeNull();
-    expect(cvVars({ ink: "#ffffff", glass: "#f4ecdc", line: "#8a8a8a" })["--cv-pane"]).toBe("rgba(244, 236, 220, 0.9)");
+  it("keeps the opacity between 30% and 100%", () => {
+    expect(cvVars({ ink: "#141414", glass: "#ffffff", line: "#8a8a8a", pane: 0.05 })["--cv-pane"]).toBe("rgba(255, 255, 255, 0.3)");
+    expect(cvVars({ ink: "#141414", glass: "#ffffff", line: "#8a8a8a", pane: Number.NaN })["--cv-pane"]).toBe("rgba(255, 255, 255, 0.8)");
   });
   it("light text gets dark on-ink and a dark halo", () => {
-    expect(cvVars({ ink: "#ffffff", glass: "#0b0b14", line: "#ffffff" })["--cv-on-ink"]).toBe("#111111");
+    expect(cvVars({ ink: "#ffffff", glass: "#0b0b14", line: "#ffffff", pane: 0.8 })["--cv-on-ink"]).toBe("#111111");
   });
 });
 
